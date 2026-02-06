@@ -137,7 +137,20 @@ export const Auth: React.FC<AuthProps> = ({ initialView, setView, onSignIn }) =>
           return;
         }
 
-        // 2. Proceed with Sign Up
+        // 2. Check Username Availability
+        const { data: existingUser } = await supabase
+          .from('profiles')
+          .select('username')
+          .eq('username', username)
+          .maybeSingle();
+
+        if (existingUser) {
+          setError('Username is already taken. Please choose another one.');
+          setIsLoading(false);
+          return;
+        }
+
+        // 3. Proceed with Sign Up
         const { data, error: signUpError } = await supabase.auth.signUp({
           email,
           password,
