@@ -33,41 +33,52 @@ const AppContent: React.FC = () => {
 
   // Check for existing session on mount
   useEffect(() => {
+    let mounted = true;
+    let safetyTimer: NodeJS.Timeout;
+
     const initializeAuth = async () => {
+      // Safety timeout - force load after 4 seconds
+      safetyTimer = setTimeout(() => {
+        if (mounted && isInitializing) {
+          console.warn('Auth check timed out - forcing load');
+          setIsInitializing(false);
+        }
+      }, 4000);
+
       try {
         // Check for existing Supabase session
         const { data: { session } } = await supabase.auth.getSession();
 
-        if (session?.user) {
+        if (session?.user && mounted) {
           // Get user profile
           const { data: profile } = await supabase
             .from('profiles')
             .select('username')
             .eq('id', session.user.id)
-            .single();
+            .maybeSingle();
 
           setUser({
             email: session.user.email || '',
             username: profile?.username || session.user.email?.split('@')[0] || 'User',
             id: session.user.id,
           });
-        } else {
-          // Fallback to localStorage for backwards compatibility
-          const savedUser = localStorage.getItem('avion_user');
-          if (savedUser) {
-            const parsed = JSON.parse(savedUser);
-            setUser(parsed);
+
+          // Only redirect to dashboard if we are at root or auth page
+          if (location.pathname === '/' || location.pathname === '/auth') {
+            navigate('/dashboard');
           }
+        } else if (mounted) {
+          // Fallback to localStorage for backwards compatibility (renamed or invalid key)
+          // Actually, better to just clear it if no session
+          localStorage.removeItem('avion_user');
         }
       } catch (error) {
         console.error('Auth initialization error:', error);
-        // Fallback to localStorage
-        const savedUser = localStorage.getItem('avion_user');
-        if (savedUser) {
-          setUser(JSON.parse(savedUser));
-        }
       } finally {
-        setIsInitializing(false);
+        if (mounted) {
+          setIsInitializing(false);
+          clearTimeout(safetyTimer);
+        }
       }
     };
 
@@ -75,28 +86,34 @@ const AppContent: React.FC = () => {
 
     // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'SIGNED_IN' && session?.user) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('username')
-          .eq('id', session.user.id)
-          .single();
+      if (mounted) {
+        if (event === 'SIGNED_IN' && session?.user) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('username')
+            .eq('id', session.user.id)
+            .maybeSingle();
 
-        const userData: UserData = {
-          email: session.user.email || '',
-          username: profile?.username || session.user.email?.split('@')[0] || 'User',
-          id: session.user.id,
-        };
+          setUser({
+            email: session.user.email || '',
+            username: profile?.username || session.user.email?.split('@')[0] || 'User',
+            id: session.user.id,
+          });
 
-        setUser(userData);
-        localStorage.setItem('avion_user', JSON.stringify(userData));
-      } else if (event === 'SIGNED_OUT') {
-        setUser(null);
-        localStorage.removeItem('avion_user');
+          if (location.pathname === '/' || location.pathname === '/auth') {
+            navigate('/dashboard');
+          }
+        } else if (event === 'SIGNED_OUT') {
+          setUser(null);
+          navigate('/');
+          localStorage.removeItem('avion_user');
+        }
       }
     });
 
     return () => {
+      mounted = false;
+      clearTimeout(safetyTimer);
       subscription.unsubscribe();
     };
   }, []);
@@ -107,9 +124,9 @@ const AppContent: React.FC = () => {
     } catch (error) {
       console.error('Sign out error:', error);
     }
-    localStorage.removeItem('avion_user');
     setUser(null);
     navigate('/');
+    localStorage.removeItem('avion_user');
   };
 
   const handleSignIn = (email: string, username: string, userId: string) => {
