@@ -105,9 +105,12 @@ export const licenseHelpers = {
             .from('license_keys')
             .select('*')
             .eq('key', key)
-            .single();
+            .maybeSingle();
 
-        if (error) return null;
+        if (error) {
+            console.error('License validation error:', error);
+            return null;
+        }
         return data;
     },
 
@@ -152,11 +155,15 @@ export const licenseHelpers = {
                 hwid_locked: hwid,
             })
             .eq('key', key)
-            .select()
-            .single();
+            .select();
 
-        if (error) throw error;
-        return data;
+        if (error) {
+            console.error('License activation error:', error);
+            throw new Error('Failed to activate license key');
+        }
+
+        // Return the first result
+        return data?.[0] || null;
     },
 
     async getUserLicense(userId: string): Promise<LicenseKey | null> {

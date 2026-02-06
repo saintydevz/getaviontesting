@@ -114,7 +114,30 @@ export const Auth: React.FC<AuthProps> = ({ initialView, setView, onSignIn }) =>
 
     try {
       if (isSignUp) {
-        // Sign Up Flow
+        // Enforce Mandatory License Key Validation BEFORE Account Creation
+        const key = licenseKey.trim();
+        if (!key) {
+          setError('License key is required for sign up.');
+          setIsLoading(false);
+          return;
+        }
+
+        // 1. Validate License Key Existence and Status
+        const license = await licenseHelpers.validateLicenseKey(key);
+
+        if (!license) {
+          setError('Invalid license key. Please check and try again.');
+          setIsLoading(false);
+          return;
+        }
+
+        if (license.user_id) {
+          setError('This license key is already in use by another account.');
+          setIsLoading(false);
+          return;
+        }
+
+        // 2. Proceed with Sign Up
         const { data, error: signUpError } = await supabase.auth.signUp({
           email,
           password,
@@ -141,13 +164,16 @@ export const Auth: React.FC<AuthProps> = ({ initialView, setView, onSignIn }) =>
             console.warn('Profile creation warning:', profileError);
           }
 
-          // If license key provided, activate it
-          if (licenseKey.trim()) {
-            try {
-              await licenseHelpers.activateLicenseKey(licenseKey.trim(), data.user.id, hwid);
-            } catch (licenseError) {
-              console.warn('License activation warning:', licenseError);
-            }
+          // 3. Activate the License Key - CRITICAL STEP
+          try {
+            await licenseHelpers.activateLicenseKey(key, data.user.id, hwid);
+          } catch (licenseError: any) {
+            console.error('License activation failed:', licenseError);
+            setError(`Account created, but license activation failed: ${licenseError.message}. Please contact support.`);
+            // In a production app, we might want to delete the user here to prevent "zombie" accounts
+            // But for now, we just rely on the Dashboard blocking them.
+            setIsLoading(false);
+            return;
           }
 
           onSignIn(email, username, data.user.id);
@@ -288,9 +314,10 @@ export const Auth: React.FC<AuthProps> = ({ initialView, setView, onSignIn }) =>
         <div className={`grid transition-all duration-500 ease-in-out ${isSignUp ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0 pointer-events-none'}`}>
           <div className="overflow-hidden space-y-5">
             <div className="space-y-2 pt-1">
-              <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 ml-1">License Key (Optional)</label>
+              <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 ml-1">License Key (Required)</label>
               <input
                 type="text"
+                required={isSignUp}
                 disabled={isLoading || lockoutTime > 0}
                 value={licenseKey}
                 onChange={(e) => setLicenseKey(e.target.value.toUpperCase())}
@@ -328,10 +355,10 @@ export const Auth: React.FC<AuthProps> = ({ initialView, setView, onSignIn }) =>
           {isLoading ? (
             <>
               <div className="w-5 h-5 border-2 border-[#1a1a2e]/30 border-t-[#1a1a2e] rounded-full animate-spin" />
-              {isSignUp ? 'Creating Account...' : 'Signing In...'}
+              {isSignUp ? 'Verifying Key & creating...' : 'Signing In...'}
             </>
           ) : (
-            isSignUp ? 'Create Account' : 'Sign In'
+            isSignUp ? 'Activate & Join' : 'Sign In'
           )}
         </button>
 

@@ -165,6 +165,45 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onSignOut }) => {
     setHwid(newHwid);
   };
 
+  // STRICT ACCESS CONTROL: If loading, show spinner. If loaded and no license, BLOCK ACCESS.
+  if (licenseLoading) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-[#ad92ff]/20 border-t-[#ad92ff] rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  // If no license found after loading, show LOCKED screen
+  if (!license) {
+    return (
+      <div className="min-h-screen bg-black text-white p-8 flex flex-col items-center justify-center relative overflow-hidden">
+        {/* Background Glow */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-red-500/10 blur-[150px] rounded-full pointer-events-none" />
+
+        <div className="z-10 max-w-md w-full bg-[#0a0a0f] border border-red-500/20 rounded-3xl p-10 text-center shadow-2xl relative">
+          <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-6 border border-red-500/20">
+            <svg className="w-8 h-8 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+          </div>
+
+          <h2 className="text-2xl font-bold mb-2">Access Denied</h2>
+          <p className="text-zinc-500 text-sm mb-8">
+            Your account does not have an active membership. Avion is a premium service and requires a valid license key to operate.
+          </p>
+
+          <button
+            onClick={onSignOut}
+            className="w-full bg-white/5 hover:bg-white/10 text-white font-medium py-3 rounded-xl transition-all border border-white/10"
+          >
+            Sign Out
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="w-full max-w-5xl mt-48 px-4 flex flex-col items-center">
       {/* License Activation Modal */}

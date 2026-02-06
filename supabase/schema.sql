@@ -54,6 +54,11 @@ CREATE POLICY "Users can view their own licenses" ON public.license_keys
 CREATE POLICY "Anyone can view unclaimed licenses for validation" ON public.license_keys
     FOR SELECT USING (user_id IS NULL);
 
+CREATE POLICY "Users can claim licenses" ON public.license_keys
+    FOR UPDATE
+    USING (user_id IS NULL)
+    WITH CHECK (user_id = auth.uid());
+
 -- ================================================
 -- 3. RATE LIMITS TABLE
 -- ================================================
@@ -92,6 +97,9 @@ ALTER TABLE public.hwid_reset_logs ENABLE ROW LEVEL SECURITY;
 -- Policies for hwid_reset_logs
 CREATE POLICY "Users can view their own reset logs" ON public.hwid_reset_logs
     FOR SELECT USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can create reset logs" ON public.hwid_reset_logs
+    FOR INSERT WITH CHECK (auth.uid() = user_id);
 
 -- ================================================
 -- 5. LOGIN ATTEMPTS TABLE (for security)
@@ -296,7 +304,3 @@ BEGIN
     RETURN v_key;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
-
--- Example: Generate a weekly key
--- SELECT generate_license_key('weekly', 'Generated for testing');
-
