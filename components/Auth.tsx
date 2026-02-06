@@ -32,7 +32,7 @@ const rateLimitTracker = {
     this.attempts++;
     this.lastAttempt = Date.now();
     if (this.attempts >= 5) {
-      this.lockoutUntil = Date.now() + 300000; // 5 minute lockout
+      this.lockoutUntil = Date.now() + 5000; // 5 seconds lockout (was 5 minutes)
     }
   },
 
@@ -204,179 +204,176 @@ export const Auth: React.FC<AuthProps> = ({ initialView, setView, onSignIn }) =>
         }
       }
     } catch (err: any) {
-      console.error('Auth error:', err);
-
-      // User-friendly error messages
-      if (err.message.includes('Invalid login credentials')) {
-        setError('Invalid email or password. Please try again.');
-      } else if (err.message.includes('Email not confirmed')) {
-        setError('Please check your email to confirm your account.');
-      } else if (err.message.includes('User already registered')) {
-        setError('An account with this email already exists. Try signing in.');
-      } else if (err.message.includes('Password')) {
-        setError('Password must be at least 6 characters long.');
-      } else {
-        setError(err.message || 'An error occurred. Please try again.');
+      console.error('Auth handler error:', err);
+      // Don't show generic error if specific error already set
+      if (!error) {
+        if (err.message?.includes('Password')) {
+          setError('Password must be at least 6 characters long.');
+        } else if (err.message?.includes('User already registered')) {
+          setError('Email already exists. Please sign in.');
+        } else {
+          setError(err.message || 'An unexpected error occurred');
+        }
       }
-
-      // Reset Turnstile on error
-      setTurnstileToken(null);
-    } finally {
-      setIsLoading(false);
     }
-  };
+  } finally {
+    // Reset Turnstile on every attempt end
+    setTurnstileToken(null);
+    setIsLoading(false);
+  }
+};
 
-  return (
-    <div className={`w-full max-w-md mt-48 px-4 flex flex-col items-center transition-all duration-700 ease-out ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'}`}>
-      <div className="text-center mb-10 h-32 flex flex-col justify-center">
-        <h2 className="text-5xl font-bold hero-heading mb-4 transition-all duration-500">
-          {isSignUp ? 'Get Started.' : 'Welcome Back.'}
-        </h2>
-        <p className="text-zinc-500 font-medium transition-all duration-500">
-          {isSignUp ? 'Unlock the full power of Avion scripting.' : 'Continue your scripting journey with Avion.'}
-        </p>
+return (
+  <div className={`w-full max-w-md mt-48 px-4 flex flex-col items-center transition-all duration-700 ease-out ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'}`}>
+    <div className="text-center mb-10 h-32 flex flex-col justify-center">
+      <h2 className="text-5xl font-bold hero-heading mb-4 transition-all duration-500">
+        {isSignUp ? 'Get Started.' : 'Welcome Back.'}
+      </h2>
+      <p className="text-zinc-500 font-medium transition-all duration-500">
+        {isSignUp ? 'Unlock the full power of Avion scripting.' : 'Continue your scripting journey with Avion.'}
+      </p>
+    </div>
+
+    <form
+      onSubmit={handleSubmit}
+      className="w-full bg-[#0d0d14] border border-white/[0.05] p-10 rounded-[32px] shadow-2xl space-y-5 overflow-hidden transition-all duration-500"
+    >
+      {/* Error Message */}
+      {error && (
+        <div className="bg-red-500/10 border border-red-500/20 rounded-2xl p-4 flex items-start gap-3">
+          <svg className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <p className="text-red-400 text-sm font-medium">{error}</p>
+        </div>
+      )}
+
+      {/* Lockout Warning */}
+      {lockoutTime > 0 && (
+        <div className="bg-amber-500/10 border border-amber-500/20 rounded-2xl p-4 flex items-center gap-3">
+          <svg className="w-5 h-5 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <p className="text-amber-400 text-sm font-medium">
+            Rate limited. Try again in {lockoutTime}s
+          </p>
+        </div>
+      )}
+
+      {/* Common Field: Email */}
+      <div className="space-y-2">
+        <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 ml-1">Email Address</label>
+        <input
+          type="email"
+          required
+          disabled={isLoading || lockoutTime > 0}
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className="w-full bg-black/40 border border-white/[0.06] rounded-2xl px-5 py-4 focus:outline-none focus:border-[#ad92ff]/40 transition-all text-[14px] font-medium placeholder:text-zinc-800 disabled:opacity-50"
+          placeholder="name@example.com"
+        />
       </div>
 
-      <form
-        onSubmit={handleSubmit}
-        className="w-full bg-[#0d0d14] border border-white/[0.05] p-10 rounded-[32px] shadow-2xl space-y-5 overflow-hidden transition-all duration-500"
+      {/* Sliding Extra Fields: Username */}
+      <div className={`grid transition-all duration-500 ease-in-out ${isSignUp ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0 pointer-events-none'}`}>
+        <div className="overflow-hidden space-y-5">
+          <div className="space-y-2 pt-1">
+            <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 ml-1">Username</label>
+            <input
+              type="text"
+              required={isSignUp}
+              disabled={isLoading || lockoutTime > 0}
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              className="w-full bg-black/40 border border-white/[0.06] rounded-2xl px-5 py-4 focus:outline-none focus:border-[#ad92ff]/40 transition-all text-[14px] font-medium placeholder:text-zinc-800 disabled:opacity-50"
+              placeholder="avion_user"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Common Field: Password */}
+      <div className="space-y-2">
+        <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 ml-1">Password</label>
+        <input
+          type="password"
+          required
+          disabled={isLoading || lockoutTime > 0}
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          className="w-full bg-black/40 border border-white/[0.06] rounded-2xl px-5 py-4 focus:outline-none focus:border-[#ad92ff]/40 transition-all text-[14px] font-medium placeholder:text-zinc-800 disabled:opacity-50"
+          placeholder="••••••••"
+          minLength={6}
+        />
+      </div>
+
+      {/* Sliding Extra Fields: License Key */}
+      <div className={`grid transition-all duration-500 ease-in-out ${isSignUp ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0 pointer-events-none'}`}>
+        <div className="overflow-hidden space-y-5">
+          <div className="space-y-2 pt-1">
+            <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 ml-1">License Key (Required)</label>
+            <input
+              type="text"
+              required={isSignUp}
+              disabled={isLoading || lockoutTime > 0}
+              value={licenseKey}
+              onChange={(e) => setLicenseKey(e.target.value.toUpperCase())}
+              className="w-full bg-black/40 border border-white/[0.06] rounded-2xl px-5 py-4 focus:outline-none focus:border-[#ad92ff]/40 transition-all text-[14px] font-medium uppercase tracking-wider placeholder:text-zinc-800 disabled:opacity-50"
+              placeholder="AVION-XXXX-XXXX-XXXX"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Cloudflare Turnstile */}
+      <div className="pt-2">
+        <Turnstile
+          siteKey={TURNSTILE_SITE_KEY}
+          onVerify={handleTurnstileVerify}
+          onError={handleTurnstileError}
+          onExpire={handleTurnstileExpire}
+          theme="dark"
+        />
+        {turnstileToken && (
+          <div className="flex items-center justify-center gap-2 mt-3 text-emerald-400 text-xs">
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+            <span>Security verified</span>
+          </div>
+        )}
+      </div>
+
+      <button
+        type="submit"
+        disabled={isLoading || lockoutTime > 0 || !turnstileToken}
+        className="w-full bg-[#ad92ff] text-[#1a1a2e] font-bold py-4 rounded-2xl hover:brightness-110 transition-all active:scale-[0.98] mt-4 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
       >
-        {/* Error Message */}
-        {error && (
-          <div className="bg-red-500/10 border border-red-500/20 rounded-2xl p-4 flex items-start gap-3">
-            <svg className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <p className="text-red-400 text-sm font-medium">{error}</p>
-          </div>
+        {isLoading ? (
+          <>
+            <div className="w-5 h-5 border-2 border-[#1a1a2e]/30 border-t-[#1a1a2e] rounded-full animate-spin" />
+            {isSignUp ? 'Verifying Key & creating...' : 'Signing In...'}
+          </>
+        ) : (
+          isSignUp ? 'Activate & Join' : 'Sign In'
         )}
+      </button>
 
-        {/* Lockout Warning */}
-        {lockoutTime > 0 && (
-          <div className="bg-amber-500/10 border border-amber-500/20 rounded-2xl p-4 flex items-center gap-3">
-            <svg className="w-5 h-5 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <p className="text-amber-400 text-sm font-medium">
-              Rate limited. Try again in {lockoutTime}s
-            </p>
-          </div>
-        )}
-
-        {/* Common Field: Email */}
-        <div className="space-y-2">
-          <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 ml-1">Email Address</label>
-          <input
-            type="email"
-            required
-            disabled={isLoading || lockoutTime > 0}
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full bg-black/40 border border-white/[0.06] rounded-2xl px-5 py-4 focus:outline-none focus:border-[#ad92ff]/40 transition-all text-[14px] font-medium placeholder:text-zinc-800 disabled:opacity-50"
-            placeholder="name@example.com"
-          />
-        </div>
-
-        {/* Sliding Extra Fields: Username */}
-        <div className={`grid transition-all duration-500 ease-in-out ${isSignUp ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0 pointer-events-none'}`}>
-          <div className="overflow-hidden space-y-5">
-            <div className="space-y-2 pt-1">
-              <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 ml-1">Username</label>
-              <input
-                type="text"
-                required={isSignUp}
-                disabled={isLoading || lockoutTime > 0}
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                className="w-full bg-black/40 border border-white/[0.06] rounded-2xl px-5 py-4 focus:outline-none focus:border-[#ad92ff]/40 transition-all text-[14px] font-medium placeholder:text-zinc-800 disabled:opacity-50"
-                placeholder="avion_user"
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Common Field: Password */}
-        <div className="space-y-2">
-          <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 ml-1">Password</label>
-          <input
-            type="password"
-            required
-            disabled={isLoading || lockoutTime > 0}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full bg-black/40 border border-white/[0.06] rounded-2xl px-5 py-4 focus:outline-none focus:border-[#ad92ff]/40 transition-all text-[14px] font-medium placeholder:text-zinc-800 disabled:opacity-50"
-            placeholder="••••••••"
-            minLength={6}
-          />
-        </div>
-
-        {/* Sliding Extra Fields: License Key */}
-        <div className={`grid transition-all duration-500 ease-in-out ${isSignUp ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0 pointer-events-none'}`}>
-          <div className="overflow-hidden space-y-5">
-            <div className="space-y-2 pt-1">
-              <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 ml-1">License Key (Required)</label>
-              <input
-                type="text"
-                required={isSignUp}
-                disabled={isLoading || lockoutTime > 0}
-                value={licenseKey}
-                onChange={(e) => setLicenseKey(e.target.value.toUpperCase())}
-                className="w-full bg-black/40 border border-white/[0.06] rounded-2xl px-5 py-4 focus:outline-none focus:border-[#ad92ff]/40 transition-all text-[14px] font-medium uppercase tracking-wider placeholder:text-zinc-800 disabled:opacity-50"
-                placeholder="AVION-XXXX-XXXX-XXXX"
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Cloudflare Turnstile */}
-        <div className="pt-2">
-          <Turnstile
-            siteKey={TURNSTILE_SITE_KEY}
-            onVerify={handleTurnstileVerify}
-            onError={handleTurnstileError}
-            onExpire={handleTurnstileExpire}
-            theme="dark"
-          />
-          {turnstileToken && (
-            <div className="flex items-center justify-center gap-2 mt-3 text-emerald-400 text-xs">
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-              <span>Security verified</span>
-            </div>
-          )}
-        </div>
-
-        <button
-          type="submit"
-          disabled={isLoading || lockoutTime > 0 || !turnstileToken}
-          className="w-full bg-[#ad92ff] text-[#1a1a2e] font-bold py-4 rounded-2xl hover:brightness-110 transition-all active:scale-[0.98] mt-4 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-        >
-          {isLoading ? (
-            <>
-              <div className="w-5 h-5 border-2 border-[#1a1a2e]/30 border-t-[#1a1a2e] rounded-full animate-spin" />
-              {isSignUp ? 'Verifying Key & creating...' : 'Signing In...'}
-            </>
-          ) : (
-            isSignUp ? 'Activate & Join' : 'Sign In'
-          )}
+      <p className="text-center text-zinc-500 text-sm font-medium pt-2 transition-all">
+        {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
+        <button type="button" onClick={toggleMode} className="text-[#ad92ff] hover:underline font-bold" disabled={isLoading}>
+          {isSignUp ? 'Sign in' : 'Sign up'}
         </button>
+      </p>
 
-        <p className="text-center text-zinc-500 text-sm font-medium pt-2 transition-all">
-          {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
-          <button type="button" onClick={toggleMode} className="text-[#ad92ff] hover:underline font-bold" disabled={isLoading}>
-            {isSignUp ? 'Sign in' : 'Sign up'}
-          </button>
-        </p>
-
-        {/* Security Info */}
-        <div className="flex items-center justify-center gap-2 pt-4 text-zinc-700 text-xs">
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-          </svg>
-          <span>Protected by Cloudflare Turnstile</span>
-        </div>
-      </form>
-    </div>
-  );
+      {/* Security Info */}
+      <div className="flex items-center justify-center gap-2 pt-4 text-zinc-700 text-xs">
+        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+        </svg>
+        <span>Protected by Cloudflare Turnstile</span>
+      </div>
+    </form>
+  </div>
+);
 };
