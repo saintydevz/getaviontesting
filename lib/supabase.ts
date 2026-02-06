@@ -167,9 +167,12 @@ export const licenseHelpers = {
             .eq('is_active', true)
             .order('expires_at', { ascending: false })
             .limit(1)
-            .single();
+            .maybeSingle();
 
-        if (error) return null;
+        if (error) {
+            console.error('Error fetching license:', error);
+            return null;
+        }
         return data;
     },
 

@@ -334,9 +334,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onSignOut }) => {
         <div className="bg-[#0d0d14] border border-white/[0.05] p-8 rounded-[32px] shadow-xl">
           <div className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-4">Membership</div>
           <div className="text-2xl font-bold text-[#ad92ff]">
-            {license?.type === 'lifetime' ? 'Lifetime Tier' :
-              license?.type === 'monthly' ? 'Monthly Tier' :
-                license?.type === 'weekly' ? 'Weekly Tier' : 'Free Tier'}
+            {license?.type === 'lifetime' ? 'Lifetime Premium' :
+              license?.type === 'monthly' ? 'Monthly Premium' :
+                license?.type === 'weekly' ? 'Weekly Premium' : 'No License'}
           </div>
           <div className="text-zinc-600 text-sm mt-2">
             {license?.activated_at

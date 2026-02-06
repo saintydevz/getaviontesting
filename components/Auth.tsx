@@ -75,7 +75,7 @@ export const Auth: React.FC<AuthProps> = ({ initialView, setView, onSignIn }) =>
     setIsSignUp(!isSignUp);
     setView(!isSignUp ? 'signup' : 'signin');
     setError(null);
-    setTurnstileToken(null);
+    // Don't reset turnstileToken - keep the verification
   };
 
   const handleTurnstileVerify = (token: string) => {

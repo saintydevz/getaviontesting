@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 
 interface TurnstileProps {
     siteKey: string;
@@ -30,7 +30,14 @@ export const Turnstile: React.FC<TurnstileProps> = ({
 }) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const widgetIdRef = useRef<string | null>(null);
+    const callbacksRef = useRef({ onVerify, onError, onExpire });
     const [isLoaded, setIsLoaded] = useState(false);
+    const [isRendered, setIsRendered] = useState(false);
+
+    // Keep callbacks ref updated without triggering re-renders
+    useEffect(() => {
+        callbacksRef.current = { onVerify, onError, onExpire };
+    }, [onVerify, onError, onExpire]);
 
     useEffect(() => {
         // Load Turnstile script if not already loaded
@@ -51,7 +58,9 @@ export const Turnstile: React.FC<TurnstileProps> = ({
             setIsLoaded(true);
         } else {
             // Script exists but not loaded yet
+            const originalOnLoad = window.onTurnstileLoad;
             window.onTurnstileLoad = () => {
+                originalOnLoad?.();
                 setIsLoaded(true);
             };
         }
@@ -61,6 +70,7 @@ export const Turnstile: React.FC<TurnstileProps> = ({
             if (widgetIdRef.current && window.turnstile) {
                 try {
                     window.turnstile.remove(widgetIdRef.current);
+                    widgetIdRef.current = null;
                 } catch (e) {
                     // Widget may already be removed
                 }
@@ -69,33 +79,26 @@ export const Turnstile: React.FC<TurnstileProps> = ({
     }, []);
 
     useEffect(() => {
-        if (isLoaded && containerRef.current && window.turnstile) {
-            // Remove existing widget if any
-            if (widgetIdRef.current) {
-                try {
-                    window.turnstile.remove(widgetIdRef.current);
-                } catch (e) {
-                    // Widget may already be removed
-                }
-            }
-
-            // Render new widget
+        // Only render once when loaded and container exists
+        if (isLoaded && containerRef.current && window.turnstile && !isRendered) {
+            // Render the widget
             widgetIdRef.current = window.turnstile.render(containerRef.current, {
                 sitekey: siteKey,
                 theme,
                 size,
                 callback: (token: string) => {
-                    onVerify(token);
+                    callbacksRef.current.onVerify(token);
                 },
                 'error-callback': () => {
-                    onError?.();
+                    callbacksRef.current.onError?.();
                 },
                 'expired-callback': () => {
-                    onExpire?.();
+                    callbacksRef.current.onExpire?.();
                 },
             });
+            setIsRendered(true);
         }
-    }, [isLoaded, siteKey, theme, size, onVerify, onError, onExpire]);
+    }, [isLoaded, siteKey, theme, size, isRendered]);
 
     return (
         <div className="flex justify-center">
