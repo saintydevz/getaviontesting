@@ -1,0 +1,21 @@
+[
+    {
+        "version": "Build 2.4.1",
+        "date": "Feb 2026",
+        "status": "Latest",
+        "changes": [
+            "Complete 100% UNC compliance for the latest engine patches.",
+            "New 'Phantom Execution' mode for undetected background runs.",
+            "Automated HWID reset system integrated directly into the dashboard."
+        ]
+    },
+    {
+        "version": "Build 2.3.5",
+        "date": "Jan 2026",
+        "status": "Stable",
+        "changes": [
+            "Initial UI transition for the new 2026 design language.",
+            "Enhanced API security for lifetime license verification."
+        ]
+    }
+]

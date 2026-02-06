@@ -1,0 +1,2471 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Avion Scripting Engine Documentation</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/github-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+    <script>hljs.highlightAll();</script>
+    <style>
+        :root {
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --bg-tertiary: #21262d;
+            --text-primary: #f0f6fc;
+            --text-secondary: #c9d1d9;
+            --accent-primary: #8a2be2;
+            --accent-secondary: #9370db;
+            --accent-tertiary: #6a0dad;
+            --border-color: #30363d;
+            --sidebar-width: 280px;
+            --sidebar-collapsed-width: 60px;
+            --header-height: 60px;
+            --transition-speed: 0.3s;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            display: flex;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+            border-radius: 5px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(to bottom, var(--accent-primary), var(--accent-tertiary));
+            border-radius: 5px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(to bottom, var(--accent-secondary), var(--accent-primary));
+        }
+
+        /* Code styling */
+        code {
+            font-family: 'Fira Code', monospace;
+            border-radius: 6px;
+            padding: 0.2em 0.4em;
+            background-color: var(--bg-tertiary);
+            color: var(--text-secondary);
+        }
+
+        pre {
+            position: relative;
+            margin: 1rem 0;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        pre code {
+            padding: 1.2em;
+            display: block;
+            overflow-x: auto;
+            line-height: 1.5;
+            font-size: 0.9rem;
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: var(--accent-primary);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 4px 8px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        pre:hover .copy-btn {
+            opacity: 1;
+        }
+
+        .copy-btn:hover {
+            background: var(--accent-secondary);
+        }
+
+        /* Header */
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: var(--header-height);
+            background: linear-gradient(90deg, var(--bg-secondary), var(--bg-tertiary));
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            z-index: 100;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .toggle-sidebar {
+            background: none;
+            border: none;
+            color: var(--text-primary);
+            cursor: pointer;
+            font-size: 1.2rem;
+            padding: 5px;
+            border-radius: 4px;
+            transition: background-color var(--transition-speed);
+        }
+
+        .toggle-sidebar:hover {
+            background-color: var(--bg-tertiary);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+            font-size: 1.2rem;
+            color: var(--text-primary);
+        }
+
+        .logo-icon {
+            color: var(--accent-primary);
+            font-size: 1.5rem;
+        }
+
+        .search-container {
+            position: relative;
+        }
+
+        .search-bar {
+            padding: 10px 15px;
+            padding-left: 40px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            width: 300px;
+            background-color: var(--bg-tertiary);
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
+            transition: all var(--transition-speed);
+        }
+
+        .search-bar:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px rgba(138, 43, 226, 0.3);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: linear-gradient(180deg, var(--bg-secondary), var(--bg-primary));
+            height: 100vh;
+            position: fixed;
+            top: var(--header-height);
+            left: 0;
+            overflow-y: auto;
+            overflow-x: hidden;
+            transition: width var(--transition-speed), transform var(--transition-speed);
+            z-index: 90;
+            border-right: 1px solid var(--border-color);
+            padding: 20px 0;
+        }
+
+        .sidebar.collapsed {
+            width: var(--sidebar-collapsed-width);
+        }
+
+        .sidebar-menu {
+            list-style: none;
+        }
+
+        .menu-title {
+            padding: 15px 20px 10px;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .menu-item {
+            margin: 5px 0;
+        }
+
+        .menu-item a {
+            display: flex;
+            align-items: center;
+            padding: 10px 20px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: all var(--transition-speed);
+            border-left: 3px solid transparent;
+            font-size: 0.9rem;
+        }
+
+        .menu-item a:hover {
+            background: linear-gradient(90deg, rgba(138, 43, 226, 0.2), transparent);
+            color: var(--text-primary);
+            border-left-color: var(--accent-primary);
+        }
+
+        .menu-item a.active {
+            background: linear-gradient(90deg, rgba(138, 43, 226, 0.3), transparent);
+            color: var(--text-primary);
+            border-left-color: var(--accent-primary);
+        }
+
+        .menu-icon {
+            margin-right: 12px;
+            min-width: 20px;
+            text-align: center;
+            color: var(--accent-secondary);
+        }
+
+        .menu-text {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .sidebar.collapsed .menu-text,
+        .sidebar.collapsed .menu-title span:first-child {
+            display: none;
+        }
+
+        .dropdown-btn {
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            text-align: left;
+            background: none;
+            border: none;
+            padding: 12px 20px;
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
+            font-size: 1rem;
+            transition: all var(--transition-speed);
+        }
+
+        .dropdown-btn:hover {
+            background: linear-gradient(90deg, rgba(138, 43, 226, 0.2), transparent);
+        }
+
+        .dropdown-container {
+            background-color: rgba(13, 17, 23, 0.5);
+            overflow: hidden;
+            max-height: 0;
+            transition: max-height var(--transition-speed);
+        }
+
+        .dropdown-container.show {
+            max-height: 1000px;
+        }
+
+        /* Content */
+        .content {
+            flex: 1;
+            margin-left: var(--sidebar-width);
+            margin-top: var(--header-height);
+            padding: 30px;
+            transition: margin-left var(--transition-speed);
+        }
+
+        .content.expanded {
+            margin-left: var(--sidebar-collapsed-width);
+        }
+
+        .doc-section {
+            background: linear-gradient(180deg, var(--bg-secondary), var(--bg-tertiary));
+            border-radius: 8px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--border-color);
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .doc-section h1 {
+            font-size: 2rem;
+            margin-bottom: 20px;
+            color: var(--text-primary);
+            border-bottom: 2px solid var(--accent-primary);
+            padding-bottom: 10px;
+            background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .doc-section h2 {
+            font-size: 1.5rem;
+            margin: 25px 0 15px;
+            color: var(--text-primary);
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .doc-section h3 {
+            font-size: 1.2rem;
+            margin: 20px 0 10px;
+            color: var(--text-secondary);
+        }
+
+        .doc-section p {
+            margin-bottom: 15px;
+            color: var(--text-secondary);
+        }
+
+        .function-signature {
+            background-color: var(--bg-tertiary);
+            border-left: 4px solid var(--accent-primary);
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+
+        .function-params {
+            margin: 15px 0;
+        }
+
+        .param {
+            display: flex;
+            margin-bottom: 8px;
+        }
+
+        .param-name {
+            font-weight: 600;
+            color: var(--accent-secondary);
+            min-width: 120px;
+        }
+
+        .param-desc {
+            color: var(--text-secondary);
+            flex: 1;
+        }
+
+        .returns {
+            margin: 15px 0;
+            padding: 10px;
+            background-color: rgba(138, 43, 226, 0.1);
+            border-radius: 4px;
+            border-left: 3px solid var(--accent-primary);
+        }
+
+        .example {
+            margin: 25px 0;
+        }
+
+        .example-title {
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: var(--text-primary);
+        }
+
+        /* Navigation Buttons */
+        .page-navigation {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .nav-btn {
+            display: flex;
+            align-items: center;
+            padding: 12px 20px;
+            background: linear-gradient(90deg, var(--bg-secondary), var(--bg-tertiary));
+            color: var(--text-primary);
+            text-decoration: none;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+            border: 1px solid var(--border-color);
+        }
+
+        .nav-btn:hover {
+            background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(138, 43, 226, 0.3);
+        }
+
+        .nav-btn.prev::before {
+            content: "←";
+            margin-right: 8px;
+        }
+
+        .nav-btn.next::after {
+            content: "→";
+            margin-left: 8px;
+        }
+
+        .nav-btn span {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        /* Mobile responsiveness */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                width: var(--sidebar-width);
+            }
+            
+            .sidebar.show {
+                transform: translateX(0);
+            }
+            
+            .content {
+                margin-left: 0;
+            }
+            
+            .search-bar {
+                width: 180px;
+            }
+
+            .page-navigation {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .nav-btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+
+/* CSS Styles */
+.doc-image {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    border: 1px solid #30363d;
+    margin: 20px 0;
+    display: block;
+}
+
+.image-container {
+    position: relative;
+    margin: 25px 0;
+    overflow: hidden;
+}
+
+.image-caption {
+    text-align: center;
+    font-style: italic;
+    color: #8b949e;
+    margin-top: 8px;
+    font-size: 0.9rem;
+}
+
+.image-border {
+    border: 2px solid #8a2be2;
+    border-radius: 8px;
+    padding: 4px;
+}
+
+.image-shadow {
+    box-shadow: 0 6px 12px rgba(138, 43, 226, 0.3);
+}
+
+.image-zoom {
+    transition: transform 0.3s ease;
+    cursor: zoom-in;
+}
+
+.image-zoom:hover {
+    transform: scale(1.02);
+}
+
+.two-images {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.two-images > div {
+    flex: 1;
+    min-width: 300px;
+}
+
+
+.editor-list {
+    background: var(--list-bg);
+    border-radius: 12px;
+    padding: 1.8rem;
+    margin-bottom: 2rem;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.editor-list:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+}
+
+.editor-list ul {
+    list-style: none;
+    margin-bottom: 0;
+    padding-left: 0; /* remove default padding */
+}
+
+.editor-list li {
+    margin-bottom: 1rem;
+    color: var(--text-secondary);
+    position: relative;
+    padding-left: 2.2rem;
+    transition: color 0.2s ease;
+}
+
+.editor-list li:hover {
+    color: var(--text-primary);
+}
+
+.editor-list li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0.7rem;
+    width: 12px;
+    height: 12px;
+    background: var(--accent-secondary);
+    border-radius: 50%;
+    box-shadow: 0 0 12px var(--accent-secondary);
+    transition: transform 0.2s ease;
+}
+
+.editor-list li:hover::before {
+    transform: scale(1.2);
+}
+
+.editor-list li:last-child {
+    margin-bottom: 0;
+}
+
+/* CSS Styles */
+
+.doc-video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* Makes it fill container without distortion */
+    border-radius: 8px;
+    display: block;
+    transition: transform 0.3s ease;
+}
+
+.video-container {
+    position: relative;
+    margin: 25px 0;
+    overflow: hidden;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    border: 1px solid #30363d;
+    background: #0d1117;
+    aspect-ratio: 16 / 9;
+}
+
+.video-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(45deg, #161b22, #21262d);
+    cursor: pointer;
+}
+
+.play-button {
+    width: 70px;
+    height: 70px;
+    background: rgba(138, 43, 226, 0.8);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.play-button:hover {
+    background: rgba(138, 43, 226, 1);
+    transform: scale(1.1);
+}
+
+.play-button i {
+    color: white;
+    font-size: 1.8rem;
+    margin-left: 4px;
+}
+
+.video-caption {
+    text-align: center;
+    font-style: italic;
+    color: #8b949e;
+    margin-top: 8px;
+    font-size: 0.9rem;
+}
+
+.video-border {
+    border: 2px solid #8a2be2;
+    border-radius: 8px;
+    padding: 4px;
+}
+
+.video-shadow {
+    box-shadow: 0 6px 12px rgba(138, 43, 226, 0.3);
+}
+
+.video-zoom {
+    transition: transform 0.3s ease;
+}
+
+.video-zoom:hover {
+    transform: scale(1.02);
+}
+
+.two-videos {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.two-videos > div {
+    flex: 1;
+    min-width: 300px;
+}
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-left">
+            <button class="toggle-sidebar" id="toggle-sidebar">☰</button>
+            <div class="logo">
+                <span class="logo-icon"></span>
+                <span>Avion Scripting Engine</span>
+            </div>
+        </div>
+        <div class="search-container">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="search" placeholder="Search documentation..." class="search-bar">
+        </div>
+    </header>
+
+<aside class="sidebar" id="sidebar">
+    <nav>
+        <ul class="sidebar-menu">
+            <li class="menu-title">
+                <span>API Reference</span>
+                <span>▼</span>
+            </li>
+
+
+
+            <!-- Avion Lua Engine Dropdown -->
+            <li class="menu-item">
+                        <button class="dropdown-btn" onclick="toggleDropdown('avion-general')">
+                    <span class="menu-icon">⚙️</span>
+                    <span class="menu-text">Avion General Use</span>
+                    <span>▼</span>
+                </button>
+                <ul class="dropdown-container" id="avion-general">
+                    <li class="menu-item">
+                        <a href="#general-uiguide" class="nav-link" onclick="showDoc('general-ui')"> UI Guide</a></li>
+                    <li class="menu-item">
+                        <a href="#general-constants" class="nav-link" onclick="showDoc('general-install')">
+                            <span class="menu-text">Installation</span>
+                        </a>
+                    </li>
+                    <li class="menu-item">
+                        <a href="#general-objects" class="nav-link" onclick="showDoc('general-commonfix')">
+                            <span class="menu-text">Common Fixes</span>
+                        </a>
+                    </li>
+                </ul>
+                <button class="dropdown-btn" onclick="toggleDropdown('avion-dropdown')">
+                    <span class="menu-icon">{ }</span>
+                    <span class="menu-text">Avion Lua Engine</span>
+                    <span>▼</span>
+                </button>
+                <ul class="dropdown-container" id="avion-dropdown">
+                    <li class="menu-item"><a href="#actors" class="nav-link" onclick="showDoc('actors')">Actors</a></li>
+                    <li class="menu-item"><a href="#bit" class="nav-link" onclick="showDoc('bit')">Bit</a></li>
+                    <li class="menu-item"><a href="#cache" class="nav-link" onclick="showDoc('cache')">Cache</a></li>
+                    <li class="menu-item"><a href="#crypt" class="nav-link" onclick="showDoc('crypt')">Crypt</a></li>
+                    <li class="menu-item"><a href="#closures" class="nav-link" onclick="showDoc('closures')">Closures</a></li>
+                    <li class="menu-item"><a href="#console" class="nav-link" onclick="showDoc('console')">Console</a></li>
+                    <li class="menu-item"><a href="#drawing" class="nav-link" onclick="showDoc('drawing')">Drawing</a></li>
+                    <li class="menu-item"><a href="#debug" class="nav-link" onclick="showDoc('debug')">Debug</a></li>
+                    <li class="menu-item"><a href="#filesystem" class="nav-link" onclick="showDoc('filesystem')">Filesystem</a></li>
+                    <li class="menu-item"><a href="#http" class="nav-link" onclick="showDoc('http')">HTTP</a></li>
+                    <li class="menu-item"><a href="#input" class="nav-link" onclick="showDoc('input')">Input</a></li>
+                    <li class="menu-item"><a href="#instance" class="nav-link" onclick="showDoc('instance')">Instance</a></li>
+                    <li class="menu-item"><a href="#metatables" class="nav-link" onclick="showDoc('metatables')">Metatables</a></li>
+                      <li class="menu-item"><a href="#misc" class="nav-link" onclick="showDoc('metatables')">Miscellanous</a></li>
+                    <li class="menu-item"><a href="#script" class="nav-link" onclick="showDoc('script')">Script</a></li>
+                    <li class="menu-item"><a href="#signals" class="nav-link" onclick="showDoc('signals')">Signals</a></li>
+                    <li class="menu-item"><a href="#websocket" class="nav-link" onclick="showDoc('websocket')">Websocket</a></li>
+                </ul>
+            </li>
+
+        </ul>
+    </nav>
+</aside>
+
+    <main class="content" id="content">
+        <!-- Actors -->
+<section id="actors" class="doc-section">
+    <h1>Actors</h1>
+    <h2>getactors()</h2>
+    <p>Returns a list of actors you can execute in.</p>
+    
+    <div class="function-signature">
+        <code>function getactors(): table&lt;number, Actor&gt;</code>
+    </div>
+    
+    <div class="example">
+        <p>Loop through all actors in the list and print them into the console.</p>
+        <pre><code class="language-lua">
+for index, actor in getactors() do 
+    print(index, actor)
+end
+        </code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
+    </div>
+
+    <h2>run_on_actor()</h2>
+    <p>Runs a script on an actor thread. You cannot pass types like tables or functions as they are from a different Lua VM.</p>
+    
+    <div class="function-signature">
+        <code><nil> run_on_actor(&lt;Actor&gt; actor, &lt;string&gt; script, ...)</code>
+    </div>
+    
+    <div class="example">
+        <p>Retrieve the first actor and print it into the console.</p>
+        <pre><code class="language-lua">
+run_on_actor(getactors()[1], [[
+    print("Hello, world!")
+]])
+        </code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
+    </div>
+
+    <h2>get_comm_channel()</h2>
+    <div class="function-signature">
+        <code>&lt;BindableEvent&gt; get_comm_channel(&lt;number&gt; id)</code>
+    </div>
+    <p>Returns an existing communication channel.</p>
+
+       <h2>create_comm_channel()</h2>
+    <div class="function-signature">
+        <code>function create_comm_channel(): (number, BindableEvent)</code>
+    </div>
+    <p>Returns a channel and ID for data transfer between the actor state and your state.</p>
+
+       <h2>run_on_thread()</h2>
+    <div class="function-signature">
+        <code>function run_on_thread(actor_thread: thread, string: string, (opt) channel_data: any) : ()</code>
+    </div>
+    <p>Runs a script on the first available actor thread (only works if actors are present).</p>
+        <div class="example">
+        <p>Retrieve the first actor and print it into the console.</p>
+        <pre><code class="language-lua">
+run_on_thread(getactorthreads()[1], [[
+    print("Hello, world!")
+]])
+        </code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
+    </div>
+
+<h2>getactorthreads()</h2>
+    <p>Returns a list of threads you can execute in.</p>
+    
+    <div class="example">
+        <p>Loop through all threads in the list and print them into the console.</p>
+        <pre><code class="language-lua">
+for index, thread in getactorthreads() do 
+    print(index, thread)
+end
+        </code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
+    </div>
+
+    <div class="page-navigation">
+        <a href="#" class="nav-btn prev"><span>Previous: Websocket</span></a>
+        <a href="#bit" class="nav-btn next" onclick="showDoc('bit')"><span>Next: Bit</span></a>
+    </div>
+</section>
+
+
+
+        <!-- Bit -->
+        <section id="bit" class="doc-content doc-section" style="display: none;">
+            <h1>Bit</h1>
+            
+            <h2>bit.badd</h2>
+            <p>Performs a bitwise addition on multiple numbers.</p>
+            
+            <div class="function-signature">
+                <code class="language-lua">
+                    local result = bit.badd(1, 2, 3)
+                </code>
+            </div>
+
+            <h2>bit.bsub</h2>
+<p>Subtracts multiple numbers bitwise, starting from the first number.</p>
+
+<div class="function-signature">
+    <code class="language-lua">
+        local result = bit.bsub(10, 3, 2)
+    </code>
+</div>
+
+<h2>bit.bmul</h2>
+<p>Multiplies multiple numbers bitwise.</p>
+
+<div class="function-signature">
+    <code class="language-lua">
+        local result = bit.bmul(2, 3, 4)
+    </code>
+</div>
+
+<h2>bit.bdiv</h2>
+<p>Divides multiple numbers bitwise, starting from the first number.</p>
+
+<div class="function-signature">
+    <code class="language-lua">
+        local result = bit.bdiv(100, 2, 5)
+    </code>
+</div>
+
+<h2>bit.band</h2>
+<p>Performs a bitwise AND operation on all input numbers.</p>
+
+<div class="function-signature">
+    <code class="language-lua">
+        local result = bit.band(0xFF, 0xF0)
+    </code>
+</div>
+
+<h2>bit.bor</h2>
+<p>Performs a bitwise OR operation on all input numbers.</p>
+
+<div class="function-signature">
+    <code class="language-lua">
+        local result = bit.bor(0x0F, 0xF0)
+    </code>
+</div>
+
+<h2>bit.bxor</h2>
+<p>Performs a bitwise XOR operation on all input numbers.</p>
+
+<div class="function-signature">
+    <code class="language-lua">
+        local result = bit.bxor(0xFF, 0x0F)
+    </code>
+</div>
+
+<h2>bit.bnot</h2>
+<p>Performs a bitwise NOT operation on the input number.</p>
+
+<div class="function-signature">
+    <code class="language-lua">
+        local result = bit.bnot(0xF)
+    </code>
+</div>
+
+<h2>bit.lshift</h2>
+<p>Performs a left shift operation.</p>
+
+<div class="function-signature">
+    <code class="language-lua">
+        local result = bit.lshift(1, 4)
+    </code>
+</div>
+
+<h2>bit.rshift</h2>
+<p>Performs a logical right shift operation.</p>
+
+<div class="function-signature">
+    <code class="language-lua">
+        local result = bit.rshift(16, 2)
+    </code>
+</div>
+
+<h2>bit.arshift</h2>
+<p>Performs an arithmetic right shift operation.</p>
+
+<div class="function-signature">
+    <code class="language-lua">
+        local result = bit.arshift(-8, 1)
+    </code>
+</div>
+
+<h2>bit.rol</h2>
+<p>Performs a left rotate operation.</p>
+
+<div class="function-signature">
+    <code class="language-lua">
+        local result = bit.rol(0x12345678, 4)
+    </code>
+</div>
+
+<h2>bit.ror</h2>
+<p>Performs a right rotate operation.</p>
+
+<div class="function-signature">
+    <code class="language-lua">
+        local result = bit.ror(0x12345678, 4)
+    </code>
+</div>
+
+<h2>bit.bswap</h2>
+<p>Swaps the bytes in the input value.</p>
+
+<div class="function-signature">
+    <code class="language-lua">
+        local swapped = bit.bswap(0x12345678)
+    </code>
+</div>
+
+<h2>bit.tohex</h2>
+<p>Converts a number to its hexadecimal representation.</p>
+
+<div class="function-signature">
+    <code class="language-lua">
+        local hex = bit.tohex(0xABCD, 4)
+    </code>
+</div>
+
+<h2>bit.tobit</h2>
+<p>Converts a number to a 32-bit integer.</p>
+
+<div class="function-signature">
+    <code class="language-lua">
+        local int32 = bit.tobit(0xFFFFFFFF)
+    </code>
+</div>
+
+            <div class="page-navigation">
+                <a href="#actors" class="nav-btn prev" onclick="showDoc('actors')"><span>Previous: Actors</span></a>
+                <a href="#cache" class="nav-btn next" onclick="showDoc('cache')"><span>Next: Cache</span></a>
+            </div>
+        </section>
+
+        <!-- Cache -->
+        <section id="cache" class="doc-content doc-section" style="display: none;">
+            <h1>Cache</h1>
+            
+            <h2>cache.invalidate</h2>
+            
+            <div class="function-signature">
+                <code>function invalidate(object: Instance): ()</code>
+            </div>
+            <p>Removes <code>object</code> from the Instance cache, invalidating it as a reference.</p>
+            <p>Parameters: object - The object to invalidate.</p>
+            <div class="example">
+                <div class="example-title">Example</div>
+                <pre><code class="language-lua">
+local Lighting = game:GetService("Lighting")
+cache.invalidate(Lighting)
+print(Lighting, Lighting == game:GetService("Lighting")) -- > Lighting, false
+
+                </code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
+            </div>
+
+            <h2>cache.iscached</h2>
+<div class="function-signature">
+    <code>function iscached(object: Instance): boolean</code>
+</div>
+<p>Checks whether <code>object</code> exists in the Instance cache.</p>
+<p>Parameters: object - The object to find.</p>
+<div class="example">
+    <div class="example-title">Example</div>
+    <pre><code class="language-lua">
+local Lighting = game:GetService("Lighting")
+cache.invalidate(Lighting)
+print(cache.iscached(Lighting)) -- > false
+    </code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
+</div>
+
+<h2>cache.replace</h2>
+<div class="function-signature">
+    <code>function replace(object: Instance, newObject: Instance): ()</code>
+</div>
+<p>Replaces <code>object</code> in the Instance cache with <code>newObject</code>.</p>
+<p>Parameters: 
+    <br>object - The object to replace.
+    <br>newObject - The new object to replace <code>object</code> with.
+</p>
+<div class="example">
+    <div class="example-title">Example</div>
+    <pre><code class="language-lua">
+local Lighting = game:GetService("Lighting")
+local Players = game:GetService("Players")
+cache.replace(Lighting, Players)
+print(Lighting) -- > Players
+    </code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
+</div>
+
+<h2>cloneref</h2>
+<div class="function-signature">
+    <code>function cloneref(object: Instance): Instance</code>
+</div>
+<p>Returns a copy of the Instance reference to <code>object</code>. Useful for managing an Instance without directly referencing it.</p>
+<p>Parameters: object - The Instance to clone.</p>
+<div class="example">
+    <div class="example-title">Example</div>
+    <pre><code class="language-lua">
+local Lighting = game:GetService("Lighting")
+local LightingClone = cloneref(Lighting)
+print(Lighting == LightingClone) -- > false
+    </code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
+</div>
+
+<h2>compareinstances</h2>
+<div class="function-signature">
+    <code>function compareinstances(a: Instance, b: Instance): boolean</code>
+</div>
+<p>Returns whether objects <code>a</code> and <code>b</code> both reference the same Instance.</p>
+<p>Parameters: 
+    <br>a - The first Instance to compare.
+    <br>b - The second Instance to compare.
+</p>
+<div class="example">
+    <div class="example-title">Example</div>
+    <pre><code class="language-lua">
+local Lighting = game:GetService("Lighting")
+local LightingClone = cloneref(Lighting)
+print(Lighting == LightingClone) -- > false
+print(compareinstances(Lighting, LightingClone)) -- > true
+    </code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
+</div>
+
+
+            <div class="page-navigation">
+                <a href="#bit" class="nav-btn prev" onclick="showDoc('bit')"><span>Previous: Bit</span></a>
+                <a href="#crypt" class="nav-btn next" onclick="showDoc('crypt')"><span>Next: Crypt</span></a>
+            </div>
+        </section>
+
+        <!-- Crypt -->
+        <section id="crypt" class="doc-content doc-section" style="display: none;">
+            <h1>Crypt</h1>
+            
+            <h2>encrypt_data</h2>
+            <p>Placeholder description for the encrypt_data function.</p>
+            
+            <div class="function-signature">
+                <code>encrypt_data(data: string, key: string): string</code>
+            </div>
+            
+            <div class="example">
+                <div class="example-title">Example</div>
+                <pre><code class="language-lua">-- Placeholder code example
+local sensitive_data = "secret information"
+local encrypted = encrypt_data(sensitive_data, "my-secret-key")
+
+print("Encrypted: " .. encrypted)</code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
+            </div>
+
+            <div class="page-navigation">
+                <a href="#cache" class="nav-btn prev" onclick="showDoc('cache')"><span>Previous: Cache</span></a>
+                <a href="#closures" class="nav-btn next" onclick="showDoc('closures')"><span>Next: Closures</span></a>
+            </div>
+        </section>
+
+        <!-- Closures -->
+<section id="closures" class="doc-section">
+    <h1>Closure Functions</h1>
+    <p>Used to create, identify, and interact with Luau closures.</p>
+
+    <h2>checkcaller</h2>
+    <div class="function-signature">
+        <code>function checkcaller(): boolean</code>
+    </div>
+    <p>Returns whether the currently running function was called by Avion. Useful for metamethod hooks.</p>
+    <div class="example">
+        <div class="example-title">Example</div>
+        <pre><code class="language-lua">
+local refs = {}
+
+refs.__namecall = hookmetamethod(game, "__namecall", function(...)
+    local self = ...
+    local isRunningOnExecutor = checkcaller()
+
+    if isRunningOnExecutor then
+        if self == game then
+            error("No __namecall on game allowed")
+        end
+    end
+
+    return refs.__namecall(...)
+end)
+
+game:Destroy() --> Error "No __namecall on game allowed"
+        </code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
+    </div>
+
+    <h2>clonefunction</h2>
+    <div class="function-signature">
+        <code>function clonefunction&lt;T&gt;(func: T): T</code>
+    </div>
+    <p>Returns a recreated version of <code>func</code>.</p>
+    <p>Parameters: func - The function to recreate.</p>
+    <div class="example">
+        <pre><code class="language-lua">
+local function adaa()
+    print("Hello, world!")
+end
+local bar = clonefunction(adaa)
+adaa() --> Hello, world!
+bar() --> Hello, world!
+print(adaa == bar) --> false
+        </code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
+    </div>
+
+    <h2>getcallingscript</h2>
+    <div class="function-signature">
+        <code>function getcallingscript(): BaseScript</code>
+    </div>
+    <p>Returns the script responsible for the currently running function.</p>
+    <div class="example">
+        <pre><code class="language-lua">
+local refs = {}
+local bannedScripts = game:GetService("Players").LocalPlayer.PlayerGui
+
+refs.__namecall = hookmetamethod(game, "__namecall", function(...)
+    local caller = getcallingscript()
+    local isBanned = caller.IsDescendantOf(caller, bannedScripts)
+
+    if isBanned then
+        error("Not allowed to invoke __namecall")
+    end
+
+    return refs.__namecall(...)
+end)
+        </code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
+    </div>
+
+    <h2>restorefunction</h2>
+    <div class="function-signature">
+        <code>function restorefunction(func: function): ()</code>
+    </div>
+    <p>Restores a previously hooked function to its original state.</p>
+    <p>Parameters: func - The function to restore.</p>
+    <div class="example">
+        <pre><code class="language-lua">
+function a(num)
+    print(num)
+end
+local old
+old = hookfunction(a, function(num)
+    old(num + 1)
+end)
+old(5) --> 5
+a(5) --> 6
+restorefunction(a)
+a(5) --> 5
+        </code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
+    </div>
+
+    <h2>isfunctionhooked</h2>
+    <div class="function-signature">
+        <code>function isfunctionhooked(func: function): boolean</code>
+    </div>
+    <p>Returns true if <code>func</code> has been hooked by a prior <code>hookfunction</code> call.</p>
+    <p>Parameters: func - The function to check.</p>
+    <div class="example">
+        <pre><code class="language-lua">
+function a(num)
+    print(num)
+end
+print(isfunctionhooked(a)) --> false
+hookfunction(a, function(num) old(num + 1) end)
+print(isfunctionhooked(a)) --> true
+        </code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
+    </div>
+
+    <h2>isnewcclosure</h2>
+    <div class="function-signature">
+        <code>function isnewcclosure(func: function): boolean</code>
+    </div>
+    <p>Returns true if <code>func</code> is the result of a <code>newcclosure</code> call.</p>
+    <p>Parameters: func - The function to check.</p>
+    <div class="example">
+        <pre><code class="language-lua">
+function a()
+    print("Hello World!")
+end
+print(isnewcclosure(a)) --> false
+local b = newcclosure(a)
+print(isnewcclosure(b)) --> true
+        </code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
+    </div>
+
+    <h2>hookfunction</h2>
+    <div class="function-signature">
+        <code>function hookfunction&lt;T&gt;(func: T, hook: function): T</code>
+    </div>
+    <p>Replaces <code>func</code> internally with <code>hook</code>, returning a reference to the original function.</p>
+    <p>Parameters: func - The function to hook; hook - The function to redirect calls to.</p>
+    <div class="example">
+        <pre><code class="language-lua">
+local function adaa()
+    print("Hello, world!")
+end
+local adaaRef = hookfunction(adaa, function(...)
+    print("Hooked!")
+end)
+adaa() --> Hooked!
+adaaRef() --> Hello, world!
+        </code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
+    </div>
+
+    <h2>iscclosure</h2>
+    <div class="function-signature">
+        <code>function iscclosure(func: function): boolean</code>
+    </div>
+    <p>Returns true if <code>func</code> is a C closure.</p>
+    <p>Parameters: func - The function to check.</p>
+    <div class="example">
+        <pre><code class="language-lua">
+print(iscclosure(print)) --> true
+print(iscclosure(function() end)) --> false
+        </code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
+    </div>
+
+    <h2>islclosure</h2>
+    <div class="function-signature">
+        <code>function islclosure(func: function): boolean</code>
+    </div>
+    <p>Returns true if <code>func</code> is a Luau closure.</p>
+    <p>Parameters: func - The function to check.</p>
+    <div class="example">
+        <pre><code class="language-lua">
+print(islclosure(print)) --> false
+print(islclosure(function() end)) --> true
+        </code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
+    </div>
+
+    <h2>isexecutorclosure</h2>
+    <div class="function-signature">
+        <code>function isexecutorclosure(func: function): boolean</code>
+    </div>
+    <p>Returns true if <code>func</code> was created by Avion.</p>
+    <p>Parameters: func - The function to check.</p>
+    <div class="example">
+        <pre><code class="language-lua">
+print(isexecutorclosure(isexecutorclosure)) --> true
+print(isexecutorclosure(function() end)) --> true
+print(isexecutorclosure(print)) --> false
+        </code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
+    </div>
+
+    <h2>loadstring</h2>
+    <div class="function-signature">
+        <code>function loadstring(source: string, chunkname: string?): (function?, string?)</code>
+    </div>
+    <p>Generates a chunk from source code. Returns the function if successful; otherwise nil plus an error message.</p>
+    <p>Parameters: source - Source code to compile; chunkname - Optional name of the chunk.</p>
+    <div class="example">
+        <pre><code class="language-lua">
+local func, err = loadstring("print('Hello, world!')")
+assert(func, err)() --> Hello, world!
+
+local func, err = loadstring("print('Hello")
+assert(func, err)() --> Errors "Malformed string"
+        </code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
+    </div>
+
+    <h2>newcclosure</h2>
+    <div class="function-signature">
+        <code>function newcclosure&lt;T&gt;(func: T, debugname: string?): T</code>
+    </div>
+    <p>Returns a C closure that wraps <code>func</code>. Identifies as a C closure with optional debugname.</p>
+    <p>Parameters: func - Function to wrap; debugname - Optional debugname.</p>
+    <div class="example">
+        <pre><code class="language-lua">
+local adaa = function() end
+local bar = newcclosure(adaa)
+print(iscclosure(adaa)) --> false
+print(iscclosure(bar)) --> true
+        </code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
+    </div>
+
+    <h2>newlclosure</h2>
+    <div class="function-signature">
+        <code>function newlclosure&lt;T&gt;(func: T, debugname: string?): T</code>
+    </div>
+    <p>Returns a Luau closure that wraps <code>func</code> without upvalues. Identifies as a L closure.</p>
+    <p>Parameters: func - Function to wrap; debugname - Optional debugname.</p>
+    <div class="example">
+        <pre><code class="language-lua">
+local adaa = pairs
+local bar = newlclosure(pairs)
+print(iscclosure(adaa)) --> true
+print(islclosure(bar)) --> true
+        </code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
+    </div>
+</section>
+
+
+        <!-- Console -->
+<section id="console" class="doc-content doc-section" style="display: none;">
+    <h1>Console</h1>
+    <p>Functions to create and interact with a Roblox console.</p>
+
+    <h2>rconsolecreate</h2>
+    <div class="function-signature">
+        <code>function rconsolecreate(): ()</code>
+    </div>
+    <p>Creates a blank console.</p>
+    <div class="example">
+        <pre><code class="language-lua">
+rconsolecreate()
+        </code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
+    </div>
+
+    <h2>rconsoleprint</h2>
+    <div class="function-signature">
+        <code>function rconsoleprint(message: string, colour: string): ()</code>
+    </div>
+    <p>Prints a colored message to the console.</p>
+    <div class="example">
+        <pre><code class="language-lua">
+rconsoleprint("Hello World", "green")
+        </code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
+    </div>
+
+    <h2>rconsolesettitle</h2>
+    <div class="function-signature">
+        <code>function rconsolesettitle(title: string): ()</code>
+    </div>
+    <p>Sets the console's title.</p>
+    <div class="example">
+        <pre><code class="language-lua">
+rconsolesettitle("My Console")
+        </code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
+    </div>
+
+    <h2>rconsoleinput</h2>
+    <div class="function-signature">
+        <code>function rconsoleinput(): string</code>
+    </div>
+    <p>Allows the user to type input into the console, then returns it.</p>
+    <div class="example">
+        <pre><code class="language-lua">
+local input = rconsoleinput()
+print(input)
+        </code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
+    </div>
+
+    <h2>rconsoleclear</h2>
+    <div class="function-signature">
+        <code>function rconsoleclear(): ()</code>
+    </div>
+    <p>Clears the console.</p>
+    <div class="example">
+        <pre><code class="language-lua">
+rconsoleclear()
+        </code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
+    </div>
+
+    <h2>rconsoledestroy</h2>
+    <div class="function-signature">
+        <code>function rconsoledestroy(): ()</code>
+    </div>
+    <p>Destroys the console.</p>
+    <div class="example">
+        <pre><code class="language-lua">
+rconsoledestroy()
+        </code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
+    </div>
+
+    <div class="page-navigation">
+        <a href="#closures" class="nav-btn prev" onclick="showDoc('closures')"><span>Previous: Closures</span></a>
+        <a href="#drawing" class="nav-btn next" onclick="showDoc('drawing')"><span>Next: Drawing</span></a>
+    </div>
+</section>
+
+<!-- Drawing -->
+<section id="drawing" class="doc-content doc-section" style="display: none;">
+    <h1>Drawing</h1>
+
+    <h2>Drawing.new</h2>
+    <div class="function-signature">
+        <code>Drawing.new(type: string, collect: boolean?): DrawingObject</code>
+    </div>
+    <p>Creates a new drawing object of the specified type.</p>
+    <table style="width:100%; border-collapse: collapse;">
+        <thead style="background-color:#2c2c2c; color:#fff;">
+            <tr>
+                <th style="border:1px solid #444; padding:8px;">Parameter</th>
+                <th style="border:1px solid #444; padding:8px;">Type</th>
+                <th style="border:1px solid #444; padding:8px;">Description</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td style="border:1px solid #444; padding:8px;">type</td>
+                <td style="border:1px solid #444; padding:8px;">string</td>
+                <td style="border:1px solid #444; padding:8px;">The type of object ("Line", "Circle", "Square", "Triangle", "Quad", "Text", or "Image").</td>
+            </tr>
+            <tr>
+                <td style="border:1px solid #444; padding:8px;">collect</td>
+                <td style="border:1px solid #444; padding:8px;">boolean (optional)</td>
+                <td style="border:1px solid #444; padding:8px;">Whether the object should be automatically collected.</td>
+            </tr>
+        </tbody>
+    </table>
+    <p><strong>Returns:</strong> A new <code>DrawingObject</code>.</p>
+
+    <div class="example">
+        <pre><code class="language-lua">
+local line = Drawing.new("Line")
+line.From = Vector2.new(100, 100)
+line.To = Vector2.new(200, 200)
+line.Color = Color3.new(1, 0, 0)
+line.Thickness = 2
+line.Visible = true
+        </code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
+    </div>
+
+    <h2>Drawing.clear</h2>
+    <div class="function-signature">
+        <code>Drawing.clear(): ()</code>
+    </div>
+    <p>Clears all existing drawing objects.</p>
+    <div class="example">
+        <pre><code class="language-lua">
+Drawing.clear()
+        </code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
+    </div>
+
+    <h2>Drawing Fonts</h2>
+    <table style="width:100%; border-collapse: collapse;">
+        <thead style="background-color:#2c2c2c; color:#fff;">
+            <tr>
+                <th style="border:1px solid #444; padding:8px;">Constant</th>
+                <th style="border:1px solid #444; padding:8px;">Description</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td style="border:1px solid #444; padding:8px;">Drawing.Fonts.UI</td><td style="border:1px solid #444; padding:8px;">UI font</td></tr>
+            <tr><td style="border:1px solid #444; padding:8px;">Drawing.Fonts.System</td><td style="border:1px solid #444; padding:8px;">System font</td></tr>
+            <tr><td style="border:1px solid #444; padding:8px;">Drawing.Fonts.Plex</td><td style="border:1px solid #444; padding:8px;">Plex font</td></tr>
+            <tr><td style="border:1px solid #444; padding:8px;">Drawing.Fonts.Monospace</td><td style="border:1px solid #444; padding:8px;">Monospace font</td></tr>
+        </tbody>
+    </table>
+
+    <h2>Common DrawingObject Properties</h2>
+    <table style="width:100%; border-collapse: collapse;">
+        <thead style="background-color:#2c2c2c; color:#fff;">
+            <tr>
+                <th style="border:1px solid #444; padding:8px;">Property</th>
+                <th style="border:1px solid #444; padding:8px;">Type</th>
+                <th style="border:1px solid #444; padding:8px;">Description</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td style="border:1px solid #444; padding:8px;">Visible</td><td style="border:1px solid #444; padding:8px;">boolean</td><td style="border:1px solid #444; padding:8px;">Whether the object is visible</td></tr>
+            <tr><td style="border:1px solid #444; padding:8px;">ZIndex</td><td style="border:1px solid #444; padding:8px;">number</td><td style="border:1px solid #444; padding:8px;">Rendering order</td></tr>
+            <tr><td style="border:1px solid #444; padding:8px;">Transparency</td><td style="border:1px solid #444; padding:8px;">number</td><td style="border:1px solid #444; padding:8px;">Transparency (0-1)</td></tr>
+            <tr><td style="border:1px solid #444; padding:8px;">Color</td><td style="border:1px solid #444; padding:8px;">Color3</td><td style="border:1px solid #444; padding:8px;">Object color</td></tr>
+            <tr><td style="border:1px solid #444; padding:8px;">Remove()</td><td style="border:1px solid #444; padding:8px;">function</td><td style="border:1px solid #444; padding:8px;">Removes the object</td></tr>
+        </tbody>
+    </table>
+
+    <!-- Specific Shapes -->
+    <!-- Line -->
+    <h3>Line</h3>
+    <table style="width:100%; border-collapse: collapse;">
+        <thead style="background-color:#2c2c2c; color:#fff;">
+            <tr>
+                <th style="border:1px solid #444; padding:8px;">Property</th>
+                <th style="border:1px solid #444; padding:8px;">Type</th>
+                <th style="border:1px solid #444; padding:8px;">Description</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td style="border:1px solid #444; padding:8px;">From</td><td style="border:1px solid #444; padding:8px;">Vector2</td><td style="border:1px solid #444; padding:8px;">Starting point</td></tr>
+            <tr><td style="border:1px solid #444; padding:8px;">To</td><td style="border:1px solid #444; padding:8px;">Vector2</td><td style="border:1px solid #444; padding:8px;">Ending point</td></tr>
+            <tr><td style="border:1px solid #444; padding:8px;">Thickness</td><td style="border:1px solid #444; padding:8px;">number</td><td style="border:1px solid #444; padding:8px;">Line thickness</td></tr>
+        </tbody>
+    </table>
+
+    <!-- Circle -->
+    <h3>Circle</h3>
+    <table style="width:100%; border-collapse: collapse;">
+        <thead style="background-color:#2c2c2c; color:#fff;">
+            <tr>
+                <th style="border:1px solid #444; padding:8px;">Property</th>
+                <th style="border:1px solid #444; padding:8px;">Type</th>
+                <th style="border:1px solid #444; padding:8px;">Description</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td style="border:1px solid #444; padding:8px;">Position</td><td style="border:1px solid #444; padding:8px;">Vector2</td><td style="border:1px solid #444; padding:8px;">Center position</td></tr>
+            <tr><td style="border:1px solid #444; padding:8px;">Radius</td><td style="border:1px solid #444; padding:8px;">number</td><td style="border:1px solid #444; padding:8px;">Radius of the circle</td></tr>
+            <tr><td style="border:1px solid #444; padding:8px;">Filled</td><td style="border:1px solid #444; padding:8px;">boolean</td><td style="border:1px solid #444; padding:8px;">Whether filled</td></tr>
+            <tr><td style="border:1px solid #444; padding:8px;">Thickness</td><td style="border:1px solid #444; padding:8px;">number</td><td style="border:1px solid #444; padding:8px;">Outline thickness</td></tr>
+            <tr><td style="border:1px solid #444; padding:8px;">NumSides</td><td style="border:1px solid #444; padding:8px;">number</td><td style="border:1px solid #444; padding:8px;">Number of sides for approximation</td></tr>
+        </tbody>
+    </table>
+
+    <!-- Square -->
+    <h3>Square</h3>
+    <table style="width:100%; border-collapse: collapse;">
+        <thead style="background-color:#2c2c2c; color:#fff;">
+            <tr><th style="border:1px solid #444; padding:8px;">Property</th><th style="border:1px solid #444; padding:8px;">Type</th><th style="border:1px solid #444; padding:8px;">Description</th></tr>
+        </thead>
+        <tbody>
+            <tr><td style="border:1px solid #444; padding:8px;">Position</td><td style="border:1px solid #444; padding:8px;">Vector2</td><td style="border:1px solid #444; padding:8px;">Top-left position</td></tr>
+            <tr><td style="border:1px solid #444; padding:8px;">Size</td><td style="border:1px solid #444; padding:8px;">Vector2</td><td style="border:1px solid #444; padding:8px;">Dimensions</td></tr>
+            <tr><td style="border:1px solid #444; padding:8px;">Filled</td><td style="border:1px solid #444; padding:8px;">boolean</td><td style="border:1px solid #444; padding:8px;">Whether filled</td></tr>
+            <tr><td style="border:1px solid #444; padding:8px;">Thickness</td><td style="border:1px solid #444; padding:8px;">number</td><td style="border:1px solid #444; padding:8px;">Outline thickness</td></tr>
+        </tbody>
+    </table>
+
+    <!-- Triangle -->
+    <h3>Triangle</h3>
+    <table style="width:100%; border-collapse: collapse;">
+        <thead style="background-color:#2c2c2c; color:#fff;">
+            <tr><th style="border:1px solid #444; padding:8px;">Property</th><th style="border:1px solid #444; padding:8px;">Type</th><th style="border:1px solid #444; padding:8px;">Description</th></tr>
+        </thead>
+        <tbody>
+            <tr><td style="border:1px solid #444; padding:8px;">PointA</td><td style="border:1px solid #444; padding:8px;">Vector2</td><td style="border:1px solid #444; padding:8px;">First vertex</td></tr>
+            <tr><td style="border:1px solid #444; padding:8px;">PointB</td><td style="border:1px solid #444; padding:8px;">Vector2</td><td style="border:1px solid #444; padding:8px;">Second vertex</td></tr>
+            <tr><td style="border:1px solid #444; padding:8px;">PointC</td><td style="border:1px solid #444; padding:8px;">Vector2</td><td style="border:1px solid #444; padding:8px;">Third vertex</td></tr>
+            <tr><td style="border:1px solid #444; padding:8px;">Filled</td><td style="border:1px solid #444; padding:8px;">boolean</td><td style="border:1px solid #444; padding:8px;">Whether filled</td></tr>
+            <tr><td style="border:1px solid #444; padding:8px;">Thickness</td><td style="border:1px solid #444; padding:8px;">number</td><td style="border:1px solid #444; padding:8px;">Outline thickness</td></tr>
+        </tbody>
+    </table>
+
+    <!-- Quad -->
+    <h3>Quad</h3>
+    <table style="width:100%; border-collapse: collapse;">
+        <thead style="background-color:#2c2c2c; color:#fff;">
+            <tr><th style="border:1px solid #444; padding:8px;">Property</th><th style="border:1px solid #444; padding:8px;">Type</th><th style="border:1px solid #444; padding:8px;">Description</th></tr>
+        </thead>
+        <tbody>
+            <tr><td style="border:1px solid #444; padding:8px;">PointA</td><td style="border:1px solid #444; padding:8px;">Vector2</td><td style="border:1px solid #444; padding:8px;">First vertex</td></tr>
+            <tr><td style="border:1px solid #444; padding:8px;">PointB</td><td style="border:1px solid #444; padding:8px;">Vector2</td><td style="border:1px solid #444; padding:8px;">Second vertex</td></tr>
+            <tr><td style="border:1px solid #444; padding:8px;">PointC</td><td style="border:1px solid #444; padding:8px;">Vector2</td><td style="border:1px solid #444; padding:8px;">Third vertex</td></tr>
+            <tr><td style="border:1px solid #444; padding:8px;">PointD</td><td style="border:1px solid #444; padding:8px;">Vector2</td><td style="border:1px solid #444; padding:8px;">Fourth vertex</td></tr>
+            <tr><td style="border:1px solid #444; padding:8px;">Filled</td><td style="border:1px solid #444; padding:8px;">boolean</td><td style="border:1px solid #444; padding:8px;">Whether filled</td></tr>
+            <tr><td style="border:1px solid #444; padding:8px;">Thickness</td><td style="border:1px solid #444; padding:8px;">number</td><td style="border:1px solid #444; padding:8px;">Outline thickness</td></tr>
+        </tbody>
+    </table>
+
+    <!-- Text -->
+    <h3>Text</h3>
+    <table style="width:100%; border-collapse: collapse;">
+        <thead style="background-color:#2c2c2c; color:#fff;">
+            <tr><th style="border:1px solid #444; padding:8px;">Property</th><th style="border:1px solid #444; padding:8px;">Type</th><th style="border:1px solid #444; padding:8px;">Description</th></tr>
+        </thead>
+        <tbody>
+            <tr><td style="border:1px solid #444; padding:8px;">Text</td><td style="border:1px solid #444; padding:8px;">string</td><td style="border:1px solid #444; padding:8px;">Displayed text</td></tr>
+            <tr><td style="border:1px solid #444; padding:8px;">Font</td><td style="border:1px solid #444; padding:8px;">Drawing.Fonts</td><td style="border:1px solid #444; padding:8px;">Text font</td></tr>
+            <tr><td style="border:1px solid #444; padding:8px;">Size</td><td style="border:1px solid #444; padding:8px;">number</td><td style="border:1px solid #444; padding:8px;">Text size</td></tr>
+            <tr><td style="border:1px solid #444; padding:8px;">Position</td><td style="border:1px solid #444; padding:8px;">Vector2</td><td style="border:1px solid #444; padding:8px;">Text position</td></tr>
+            <tr><td style="border:1px solid #444; padding:8px;">Outline</td><td style="border:1px solid #444; padding:8px;">boolean</td><td style="border:1px solid #444; padding:8px;">Whether outlined</td></tr>
+            <tr><td style="border:1px solid #444; padding:8px;">OutlineColor</td><td style="border:1px solid #444; padding:8px;">Color3</td><td style="border:1px solid #444; padding:8px;">Outline color</td></tr>
+            <tr><td style="border:1px solid #444; padding:8px;">Center</td><td style="border:1px solid #444; padding:8px;">boolean</td><td style="border:1px solid #444; padding:8px;">Centered text</td></tr>
+            <tr><td style="border:1px solid #444; padding:8px;">TextBounds</td><td style="border:1px solid #444; padding:8px;">Vector2</td><td style="border:1px solid #444; padding:8px;">Bounding box (read-only)</td></tr>
+        </tbody>
+    </table>
+
+    <!-- Image -->
+    <h3>Image</h3>
+    <table style="width:100%; border-collapse: collapse;">
+        <thead style="background-color:#2c2c2c; color:#fff;">
+            <tr><th style="border:1px solid #444; padding:8px;">Property</th><th style="border:1px solid #444; padding:8px;">Type</th><th style="border:1px solid #444; padding:8px;">Description</th></tr>
+        </thead>
+        <tbody>
+            <tr><td style="border:1px solid #444; padding:8px;">Position</td><td style="border:1px solid #444; padding:8px;">Vector2</td><td style="border:1px solid #444; padding:8px;">Image position</td></tr>
+            <tr><td style="border:1px solid #444; padding:8px;">Size</td><td style="border:1px solid #444; padding:8px;">Vector2</td><td style="border:1px solid #444; padding:8px;">Image dimensions</td></tr>
+            <tr><td style="border:1px solid #444; padding:8px;">Data</td><td style="border:1px solid #444; padding:8px;">string</td><td style="border:1px solid #444; padding:8px;">Image data (write-only)</td></tr>
+            <tr><td style="border:1px solid #444; padding:8px;">Rounding</td><td style="border:1px solid #444; padding:8px;">number</td><td style="border:1px solid #444; padding:8px;">Corner rounding</td></tr>
+        </tbody>
+    </table>
+
+    <!-- Global Functions -->
+    <h2>Global Functions</h2>
+    <h3>getrenderproperty</h3>
+    <div class="function-signature"><code>getrenderproperty(object: DrawingObject, property: string): any</code></div>
+    <p>Returns the value of a property for a drawing object.</p>
+    <div class="example">
+        <pre><code class="language-lua">
+local color = getrenderproperty(myLine, "Color") -- > Color3 value
+        </code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
+    </div>
+
+    <h3>setrenderproperty</h3>
+    <div class="function-signature"><code>setrenderproperty(object: DrawingObject, property: string, value: any): ()</code></div>
+    <p>Sets the value of a property for a drawing object.</p>
+    <div class="example">
+        <pre><code class="language-lua">
+setrenderproperty(myCircle, "Radius", 50)
+        </code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
+    </div>
+
+    <div class="page-navigation"> <a href="#console" class="nav-btn prev" onclick="showDoc('console')"><span>Previous: Console</span></a> <a href="#debug" class="nav-btn next" onclick="showDoc('debug')"><span>Next: Debug</span></a> </div>
+</section>
+
+
+<!-- Debug -->
+<section id="debug" class="doc-content doc-section" style="display: none;">
+    <h1>Debug</h1>
+
+    <h2>debug.getconstant</h2>
+    <p>Returns the constant at a specified index in a function or stack level. Errors if the constant does not exist.</p>
+    <p><strong>Parameters:</strong></p>
+    <ul>
+        <li><code>func</code> (function | number) - The function or stack level</li>
+        <li><code>index</code> (number) - The index of the constant to retrieve</li>
+    </ul>
+    <div class="example">
+        <div class="example-title">Example</div>
+        <pre><code class="language-lua">
+local function adaa()
+    print("Hello, world!")
+end
+
+print(debug.getconstant(adaa, 1)) --> "print"
+print(debug.getconstant(adaa, 2)) --> nil
+print(debug.getconstant(adaa, 3)) --> "Hello, world!"
+        </code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
+    </div>
+
+    <h2>debug.getconstants</h2>
+    <p>Returns all constants of a function or stack level as a table.</p>
+    <p><strong>Parameters:</strong></p>
+    <ul>
+        <li><code>func</code> (function | number) - The function or stack level</li>
+    </ul>
+    <div class="example">
+        <div class="example-title">Example</div>
+        <pre><code class="language-lua">
+local function adaa()
+    local num = 5000 .. 50000
+    print("Hello, world!", num, warn)
+end
+
+for i, v in pairs(debug.getconstants(adaa)) do
+    print(i, v)
+end
+        </code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
+    </div>
+
+    <h2>debug.getinfo</h2>
+    <p>Returns debug information about a function or stack level.</p>
+    <table border="1" cellpadding="5" cellspacing="0">
+        <thead>
+            <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+            <tr><td>source</td><td>string</td><td>Chunk that created the function</td></tr>
+            <tr><td>short_src</td><td>string</td><td>Printable source for errors</td></tr>
+            <tr><td>func</td><td>function</td><td>The function itself</td></tr>
+            <tr><td>what</td><td>string</td><td>"Lua" if Luau function, "C" if C function</td></tr>
+            <tr><td>currentline</td><td>number</td><td>Current line executing, -1 if unavailable</td></tr>
+            <tr><td>name</td><td>string</td><td>Function name or blank string</td></tr>
+            <tr><td>nups</td><td>number</td><td>Number of upvalues</td></tr>
+            <tr><td>numparams</td><td>number</td><td>Number of parameters (0 for C functions)</td></tr>
+            <tr><td>is_vararg</td><td>number</td><td>1 if variadic, 0 if not</td></tr>
+        </tbody>
+    </table>
+    <div class="example">
+        <div class="example-title">Example</div>
+        <pre><code class="language-lua">
+local function adaa()
+    print("Hello, world!")
+end
+
+for k, v in pairs(debug.getinfo(adaa)) do
+    print(k, v, "(" .. type(v) .. ")")
+end
+        </code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
+    </div>
+
+    <h2>debug.setconstant</h2>
+    <p>Sets a constant at a specified index for a function or stack level.</p>
+    <p><strong>Parameters:</strong></p>
+    <ul>
+        <li><code>func</code> (function | number) - The function or stack level</li>
+        <li><code>index</code> (number) - The index of the constant to set</li>
+        <li><code>value</code> (any) - The new value</li>
+    </ul>
+    <div class="example">
+        <div class="example-title">Example</div>
+        <pre><code class="language-lua">
+local function adaa()
+    print("Hello, world!")
+end
+debug.setconstant(adaa, 3, "Goodbye, world!")
+adaa() --> Prints: Goodbye, world!
+        </code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
+    </div>
+
+    <h2>debug.getproto</h2>
+    <p>Returns the proto at a specific index in the proto table of a function or stack level. Optionally, active closures can be returned.</p>
+    <p><strong>Parameters:</strong></p>
+    <ul>
+        <li><code>func</code> (function | number) - The function or stack level</li>
+        <li><code>index</code> (number) - The proto index</li>
+        <li><code>active</code> (boolean?) - Optional, return active closures if true</li>
+    </ul>
+    <div class="example">
+        <div class="example-title">Example</div>
+        <pre><code class="language-lua">
+local function adaa()
+    local function bar() end
+    return bar
+end
+
+local proto = debug.getproto(adaa, 1)
+print(type(proto)) --> "function"
+        </code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
+    </div>
+
+    <h2>debug.getprotos</h2>
+    <p>Returns a table containing all protos of a function or stack level.</p>
+    <p><strong>Parameters:</strong></p>
+    <ul>
+        <li><code>func</code> (function | number) - The function or stack level</li>
+    </ul>
+    <div class="example">
+        <div class="example-title">Example</div>
+        <pre><code class="language-lua">
+local function adaa()
+    local function bar() end
+    local function baz() end
+end
+
+local protos = debug.getprotos(adaa)
+print(#protos) --> 2
+        </code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
+    </div>
+
+    <h2>debug.getstack</h2>
+    <p>Returns values from a stack frame at a given level. Returns a table if no index is provided.</p>
+    <p><strong>Parameters:</strong></p>
+    <ul>
+        <li><code>level</code> (number) - Stack level</li>
+        <li><code>index</code> (number?) - Optional, value index</li>
+    </ul>
+    <div class="example">
+        <div class="example-title">Example</div>
+        <pre><code class="language-lua">
+local function adaa()
+    local a, b = 1, 2
+    print(debug.getstack(1))    --> {1, 2}
+    print(debug.getstack(1, 2)) --> 2
+end
+adaa()
+        </code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
+    </div>
+
+    <h2>debug.setstack</h2>
+    <p>Sets a value at a specific index in a stack frame at a given level.</p>
+    <p><strong>Parameters:</strong></p>
+    <ul>
+        <li><code>level</code> (number) - Stack level</li>
+        <li><code>index</code> (number) - Value index</li>
+        <li><code>value</code> (any) - New value to set</li>
+    </ul>
+    <div class="example">
+        <div class="example-title">Example</div>
+        <pre><code class="language-lua">
+local function adaa()
+    local a = 1
+    debug.setstack(1, 1, 10)
+    print(a) --> 10
+end
+adaa()
+        </code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
+    </div>
+
+    <h2>debug.getupvalue</h2>
+    <p>Returns the upvalue at a specific index for a function or stack level.</p>
+    <p><strong>Parameters:</strong></p>
+    <ul>
+        <li><code>func</code> (function | number) - Function or stack level</li>
+        <li><code>index</code> (number) - Index of the upvalue</li>
+    </ul>
+    <div class="example">
+        <div class="example-title">Example</div>
+        <pre><code class="language-lua">
+local x = 10
+local function adaa()
+    print(x)
+end
+print(debug.getupvalue(adaa, 1)) --> 10
+        </code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
+    </div>
+
+    <h2>debug.getupvalues</h2>
+    <p>Returns a table containing all upvalues of a function or stack level.</p>
+    <p><strong>Parameters:</strong></p>
+    <ul>
+        <li><code>func</code> (function | number) - Function or stack level</li>
+    </ul>
+    <div class="example">
+        <div class="example-title">Example</div>
+        <pre><code class="language-lua">
+local x, y = 10, 20
+local function adaa()
+    print(x, y)
+end
+local upvalues = debug.getupvalues(adaa)
+for i, v in ipairs(upvalues) do
+    print(i, v)
+end
+--> 1 10
+--> 2 20
+        </code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
+    </div>
+
+    <h2>debug.setupvalue</h2>
+    <p>Sets the upvalue at a specific index for a function or stack level.</p>
+    <p><strong>Parameters:</strong></p>
+    <ul>
+        <li><code>func</code> (function | number) - Function or stack level</li>
+        <li><code>index</code> (number) - Index of the upvalue</li>
+        <li><code>value</code> (any) - New value</li>
+    </ul>
+    <div class="example">
+        <div class="example-title">Example</div>
+        <pre><code class="language-lua">
+local x = 10
+local function adaa()
+    print(x)
+end
+debug.setupvalue(adaa, 1, 20)
+adaa() --> Prints: 20
+        </code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
+    </div>
+
+    <h2>debug.getregistry</h2>
+    <p>Returns the Lua registry table.</p>
+    <div class="example">
+        <div class="example-title">Example</div>
+        <pre><code class="language-lua">
+local registry = debug.getregistry()
+print(type(registry)) --> "table"
+        </code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
+    </div>
+
+    <div class="page-navigation">
+        <a href="#drawing" class="nav-btn prev" onclick="showDoc('drawing')"><span>Previous: Drawing</span></a>
+        <a href="#filesystem" class="nav-btn next" onclick="showDoc('filesystem')"><span>Next: Filesystem</span></a>
+    </div>
+</section>
+
+
+
+<!-- Filesystem -->
+<section id="filesystem" class="doc-content doc-section" style="display: none;">
+    <h1>Filesystem</h1>
+    <p>These functions provide a safe interface for file operations within a designated workspace.</p>
+
+    <h2>appendfile</h2>
+    <p>Appends data to an existing file.</p>
+    <ul>
+        <li><code>path</code> (string) - File path relative to workspace</li>
+        <li><code>data</code> (string) - Data to append</li>
+    </ul>
+    <div class="example">
+        <div class="example-title">Example</div>
+        <pre><code class="language-lua">appendfile("log.txt", "New log entry\n")</code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
+    </div>
+
+    <h2>readfile</h2>
+    <p>Reads the contents of a file.</p>
+    <ul>
+        <li><code>path</code> (string) - File path relative to workspace</li>
+    </ul>
+    <p><strong>Returns:</strong> File contents as string, or <code>nil</code> if missing</p>
+    <div class="example">
+        <div class="example-title">Example</div>
+        <pre><code class="language-lua">
+local content = readfile("config.txt")
+if content then
+    print("Config contents:", content)
+else
+    print("Config file not found")
+end
+        </code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
+    </div>
+
+    <h2>listfiles</h2>
+    <p>Lists files and directories in a folder.</p>
+    <ul>
+        <li><code>path</code> (string) - Folder path relative to workspace</li>
+    </ul>
+    <p><strong>Returns:</strong> Table of file and directory names</p>
+    <div class="example">
+        <div class="example-title">Example</div>
+        <pre><code class="language-lua">
+local files = listfiles("data")
+for _, file in ipairs(files) do
+    print(file)
+end
+        </code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
+    </div>
+
+    <h2>writefile</h2>
+    <p>Writes data to a file, creating it if needed or overwriting existing content.</p>
+    <ul>
+        <li><code>path</code> (string) - File path relative to workspace</li>
+        <li><code>data</code> (string) - Data to write</li>
+    </ul>
+    <div class="example">
+        <div class="example-title">Example</div>
+        <pre><code class="language-lua">writefile("output.txt", "Hello, World!")</code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
+    </div>
+
+    <h2>makefolder</h2>
+    <p>Creates a new directory.</p>
+    <ul>
+        <li><code>path</code> (string) - Folder path relative to workspace</li>
+    </ul>
+    <div class="example">
+        <div class="example-title">Example</div>
+        <pre><code class="language-lua">makefolder("new_directory")</code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
+    </div>
+
+    <h2>isfile</h2>
+    <p>Checks if a path points to a file.</p>
+    <ul>
+        <li><code>path</code> (string) - Path relative to workspace</li>
+    </ul>
+    <p><strong>Returns:</strong> <code>true</code> if file, <code>false</code> otherwise</p>
+    <div class="example">
+        <div class="example-title">Example</div>
+        <pre><code class="language-lua">
+if isfile("data.txt") then
+    print("data.txt is a file")
+end
+        </code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
+    </div>
+
+    <h2>isfolder</h2>
+    <p>Checks if a path points to a folder.</p>
+    <ul>
+        <li><code>path</code> (string) - Path relative to workspace</li>
+    </ul>
+    <p><strong>Returns:</strong> <code>true</code> if folder, <code>false</code> otherwise</p>
+    <div class="example">
+        <div class="example-title">Example</div>
+        <pre><code class="language-lua">
+if isfolder("data") then
+    print("data is a directory")
+end
+        </code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
+    </div>
+
+    <h2>delfile</h2>
+    <p>Deletes a file.</p>
+    <ul>
+        <li><code>path</code> (string) - File path relative to workspace</li>
+    </ul>
+    <div class="example">
+        <div class="example-title">Example</div>
+        <pre><code class="language-lua">delfile("old_config.txt")</code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
+    </div>
+
+    <h2>delfolder</h2>
+    <p>Deletes a folder and its contents.</p>
+    <ul>
+        <li><code>path</code> (string) - Folder path relative to workspace</li>
+    </ul>
+    <div class="example">
+        <div class="example-title">Example</div>
+        <pre><code class="language-lua">delfolder("old_data")</code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
+    </div>
+
+
+    <p><strong>Note:</strong> All operations are restricted to the designated workspace for safety. Paths outside the workspace are not allowed, and some file types may be restricted.</p>
+
+    <div class="page-navigation">
+        <a href="#debug" class="nav-btn prev" onclick="showDoc('debug')"><span>Previous: Debug</span></a>
+        <a href="#http" class="nav-btn next" onclick="showDoc('http')"><span>Next: HTTP</span></a>
+    </div>
+</section>
+
+       <!-- HTTP -->
+<section id="http" class="doc-content doc-section" style="display: none;">
+    <h1>HTTP</h1>
+    <p>Functions to perform asynchronous HTTP requests.</p>
+
+    <h2>httpget</h2>
+    <p>Performs an asynchronous HTTP GET request.</p>
+    <ul>
+        <li><strong>url</strong> (string) - The URL to send the request to.</li>
+    </ul>
+    <p><strong>Returns:</strong> Yields and resumes with the response body as a string, or an error message.</p>
+    <div class="example">
+        <div class="example-title">Example</div>
+        <pre><code class="language-lua">
+local response = httpget("https://example.com")
+print(response)
+        </code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
+    </div>
+
+    <h2>httppost</h2>
+    <p>Performs an asynchronous HTTP POST request.</p>
+    <ul>
+        <li><strong>url</strong> (string) - The URL to send the request to.</li>
+        <li><strong>data</strong> (string) - The request body data.</li>
+        <li><strong>content_type</strong> (string, optional) - Content type of the request (default: "/").</li>
+    </ul>
+    <p><strong>Returns:</strong> Yields and resumes with the response body as a string, or an error message.</p>
+    <div class="example">
+        <div class="example-title">Example</div>
+        <pre><code class="language-lua">
+local response = httppost("https://example.com/api", "key=value", "application/x-www-form-urlencoded")
+print(response)
+        </code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
+    </div>
+
+    <h2>request</h2>
+    <p>Performs an asynchronous HTTP request with full control over parameters.</p>
+    <p><strong>Options table:</strong></p>
+    <table style="width:100%; border-collapse: collapse;">
+        <thead style="background-color: #2c2c2c; color: #fff;">
+            <tr>
+                <th style="border: 1px solid #444; padding: 8px; text-align: left;">Field</th>
+                <th style="border: 1px solid #444; padding: 8px; text-align: left;">Type</th>
+                <th style="border: 1px solid #444; padding: 8px; text-align: left;">Required</th>
+                <th style="border: 1px solid #444; padding: 8px; text-align: left;">Description</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td style="border: 1px solid #444; padding: 8px;">Url</td>
+                <td style="border: 1px solid #444; padding: 8px;">string</td>
+                <td style="border: 1px solid #444; padding: 8px;">Yes</td>
+                <td style="border: 1px solid #444; padding: 8px;">The URL to send the request to.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid #444; padding: 8px;">Method</td>
+                <td style="border: 1px solid #444; padding: 8px;">string</td>
+                <td style="border: 1px solid #444; padding: 8px;">No</td>
+                <td style="border: 1px solid #444; padding: 8px;">HTTP method (default: GET).</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid #444; padding: 8px;">Headers</td>
+                <td style="border: 1px solid #444; padding: 8px;">table</td>
+                <td style="border: 1px solid #444; padding: 8px;">No</td>
+                <td style="border: 1px solid #444; padding: 8px;">Request headers.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid #444; padding: 8px;">Body</td>
+                <td style="border: 1px solid #444; padding: 8px;">string</td>
+                <td style="border: 1px solid #444; padding: 8px;">Yes for POST/PUT/PATCH</td>
+                <td style="border: 1px solid #444; padding: 8px;">Request body.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid #444; padding: 8px;">Cookies</td>
+                <td style="border: 1px solid #444; padding: 8px;">table</td>
+                <td style="border: 1px solid #444; padding: 8px;">No</td>
+                <td style="border: 1px solid #444; padding: 8px;">Cookies to send.</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <p><strong>Response table:</strong></p>
+    <table style="width:100%; border-collapse: collapse;">
+        <thead style="background-color: #2c2c2c; color: #fff;">
+            <tr>
+                <th style="border: 1px solid #444; padding: 8px; text-align: left;">Field</th>
+                <th style="border: 1px solid #444; padding: 8px; text-align: left;">Type</th>
+                <th style="border: 1px solid #444; padding: 8px; text-align: left;">Description</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td style="border: 1px solid #444; padding: 8px;">Success</td>
+                <td style="border: 1px solid #444; padding: 8px;">boolean</td>
+                <td style="border: 1px solid #444; padding: 8px;">True if status code is 200–299.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid #444; padding: 8px;">StatusCode</td>
+                <td style="border: 1px solid #444; padding: 8px;">number</td>
+                <td style="border: 1px solid #444; padding: 8px;">HTTP status code.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid #444; padding: 8px;">StatusMessage</td>
+                <td style="border: 1px solid #444; padding: 8px;">string</td>
+                <td style="border: 1px solid #444; padding: 8px;">Status message.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid #444; padding: 8px;">Headers</td>
+                <td style="border: 1px solid #444; padding: 8px;">table</td>
+                <td style="border: 1px solid #444; padding: 8px;">Response headers.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid #444; padding: 8px;">Body</td>
+                <td style="border: 1px solid #444; padding: 8px;">string</td>
+                <td style="border: 1px solid #444; padding: 8px;">Response body.</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="example">
+        <div class="example-title">Example</div>
+        <pre><code class="language-lua">
+local response = request({
+    Url = "https://example.com/api",
+    Method = "POST",
+    Headers = {["Content-Type"] = "application/json"},
+    Body = '{"key":"value"}',
+    Cookies = {session = "abc123"}
+})
+print(response.Body)
+        </code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
+    </div>
+
+    <div class="page-navigation">
+        <a href="#filesystem" class="nav-btn prev" onclick="showDoc('filesystem')"><span>Previous: Filesystem</span></a>
+        <a href="#input" class="nav-btn next" onclick="showDoc('input')"><span>Next: Input</span></a>
+    </div>
+</section>
+
+
+        <!-- Input -->
+        <section id="input" class="doc-content doc-section" style="display: none;">
+            <h1>Input</h1>
+            
+            <h2>keypress</h2>
+            <p>Simulate key press.</p>
+            <pre><code class="language-lua">
+keypress(0x41) -- Pressing 'A' Key             
+            </code>  </code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
+
+
+            <div class="page-navigation">
+                <a href="#http" class="nav-btn prev" onclick="showDoc('http')"><span>Previous: HTTP</span></a>
+                <a href="#instance" class="nav-btn next" onclick="showDoc('instance')"><span>Next: Instance</span></a>
+            </div>
+        </section>
+
+        <!-- Instance -->
+        <section id="instance" class="doc-content doc-section" style="display: none;">
+            <h1>Instance</h1>
+
+
+
+            <div class="page-navigation">
+                <a href="#input" class="nav-btn prev" onclick="showDoc('input')"><span>Previous: Input</span></a>
+                <a href="#metatables" class="nav-btn next" onclick="showDoc('metatables')"><span>Next: Metatables</span></a>
+            </div>
+        </section>
+
+        <!-- Metatables -->
+        <section id="metatables" class="doc-content doc-section" style="display: none;">
+            <h1>Metatables</h1>
+            
+    
+            
+        
+
+            <div class="page-navigation">
+                <a href="#instance" class="nav-btn prev" onclick="showDoc('instance')"><span>Previous: Instance</span></a>
+                <a href="#script" class="nav-btn next" onclick="showDoc('script')"><span>Next: Script</span></a>
+            </div>
+        </section>
+
+        <!-- Script -->
+        <section id="script" class="doc-content doc-section" style="display: none;">
+            <h1>Script</h1>
+            
+            <h2>getscriptclosure</h2>
+            <p>Placeholder description for the script_load function.</p>
+
+
+            <div class="page-navigation">
+                <a href="#metatables" class="nav-btn prev" onclick="showDoc('metatables')"><span>Previous: Metatables</span></a>
+                <a href="#signals" class="nav-btn next" onclick="showDoc('signals')"><span>Next: Signals</span></a>
+            </div>
+        </section>
+
+        <!-- Signals -->
+        <section id="signals" class="doc-content doc-section" style="display: none;">
+            <h1>Signals</h1>
+            
+            <h2>signal_connect</h2>
+            <p>Placeholder description for the signal_connect function.</p>
+            
+            <div class="function-signature">
+                <code>signal_connect(signal: Signal, callback: Function): Connection</code>
+            </div>
+            
+            <div class="example">
+                <div class="example-title">Example</div>
+                <pre><code class="language-lua">-- Placeholder code example
+local connection = signal_connect(button.Clicked, function()
+    print("Button was clicked!")
+    play_sound("click.wav")
+end)</code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
+            </div>
+
+            <div class="page-navigation">
+                <a href="#script" class="nav-btn prev" onclick="showDoc('script')"><span>Previous: Script</span></a>
+                <a href="#websocket" class="nav-btn next" onclick="showDoc('websocket')"><span>Next: Websocket</span></a>
+            </div>
+        </section>
+
+        <!-- Websocket -->
+        <section id="websocket" class="doc-content doc-section" style="display: none;">
+            <h1>Websocket</h1>
+            
+            <h2>websocket_connect</h2>
+            <p>Placeholder description for the websocket_connect function.</p>
+            
+            <div class="function-signature">
+                <code>websocket_connect(url: string): Websocket</code>
+            </div>
+            
+            <div class="example">
+                <div class="example-title">Example</div>
+                <pre><code class="language-lua">-- Placeholder code example
+local ws = websocket_connect("wss://echo.websocket.org")
+
+signal_connect(ws.Message, function(message)
+    print("Received: " .. message)
+end)
+
+ws:send("Hello, Server!")</code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
+            </div>
+
+            <div class="page-navigation">
+                <a href="#signals" class="nav-btn prev" onclick="showDoc('signals')"><span>Previous: Signals</span></a>
+                <a href="#actors" class="nav-btn next" onclick="showDoc('actors')"><span>Next: Actors</span></a>
+            </div>
+        </section>
+
+        
+<section id="general-ui" class="doc-content doc-section" style="display:none;">
+    <h1>UI Guide</h1>
+    <p>Learn everything about Avion's UI navigation.</p>
+
+    <h2>Window Navigation</h2>
+    <p>Let's start with the basics of Avion's User Interface. Refer to Figure 1 for the main window navigation.</p>
+    <div class="editor-list">
+        <ul>
+            <li><strong>1 – Sidebar Collapse Button:</strong> Hides or shows the sidebar/menu for more workspace.</li>
+            <li><strong>2 – Dashboard Page Button:</strong> Navigates to the Dashboard page (home screen with subscription time).</li>
+            <li><strong>3 – Editor Page Button:</strong> Navigates to the Editor page where you can write and manage scripts.</li>
+            <li><strong>4 – Scripthub Page Button:</strong> Navigates to the Script Hub page, where you can browse and load scripts.</li>
+            <li><strong>5 – Settings Page Button:</strong> Navigates to the Settings page to configure Avion’s preferences.</li>
+            <li><strong>6 – Minimize Button:</strong> Minimizes Avion’s interface to the taskbar.</li>
+            <li><strong>7 – Maximize Button:</strong> Expands Avion’s interface to full screen.</li>
+            <li><strong>8 – Close Button:</strong> Closes Avion’s interface completely.</li>
+        </ul>
+    </div>
+
+
+    <div class="image-container">
+        <img src="WindowFigure.jpg" alt="Description" class="doc-image">
+        <div class="image-caption">Figure 1: Main Window Navigation</div>
+    </div>
+    <h2>Editor Page</h2>
+    <p>Refer to Figure 2 for the editor page documentation. Let's get your scripting experience started with Avion!</p>
+    <div class="editor-list">
+    <ul>
+        <li><strong>1 – Script List:</strong> The workspace folder contains saved or favorite scripts.</li>
+        <li><strong>2 – Tab Area:</strong> Displays open script tabs (use button 3 to create a new tab).</li>
+        <li><strong>3 – Create Script Tab:</strong> Opens a new tab for your script.</li>
+        <li><strong>4 – Lua Console:</strong> Shows errors or output from the active tab.</li>
+        <li><strong>5 – Injection Status:</strong> Red means not injected; green means injected.</li>
+        <li><strong>6 – Execute:</strong> Runs the script in the active tab on an active Roblox instance.</li>
+        <li><strong>7 – Clear:</strong> Clears the editor content in the active tab.</li>
+        <li><strong>8 – Open File:</strong> Load a .txt or .lua file from your computer.</li>
+        <li><strong>9 – Save File:</strong> Save the current script to your system.</li>
+        <li><strong>10 – Inject Avion:</strong> Inject Avion into an active Roblox instance.</li>
+    </ul>
+</div>
+
+
+    <div class="image-container">
+        <img src="Figure1.jpg" alt="Description" class="doc-image">
+        <div class="image-caption">Figure 2: Editor Page</div>
+    </div>
+
+    <h2>Scripthub</h2>
+    <p>Trying to find scripts for your favorite game? No problem! By using Avion's built-in scripthub, you can find a variety of scripts for all your favorite games on Roblox! See Figure 3 on how the Scripthub looks and works.</p>
+        <div class="video-caption">Figure 3: Scripthub in Action</div>
+<div class="video-container">
+    <video class="doc-video" autoplay muted loop>
+        <source src="Scripthub.mp4" type="video/mp4">
+    </video>
+</div>
+
+    <h2>Settings</h2>
+    <p>The settings are exactly what their descriptions say, they speak for themselves.</p>
+
+
+    <div class="page-navigation">
+        <a href="#avion-home" class="nav-btn prev" onclick="showDoc('avion-home')"><span>Previous: Home</span></a>
+        <a href="#general-install" class="nav-btn next" onclick="showDoc('general-install')"><span>Next: Installation</span></a>
+    </div>
+</section>
+
+<section id="general-install" class="doc-content doc-section" style="display:none;">
+    <h1>Installation</h1>
+    <p>How to install Avion...</p>
+    <div class="page-navigation">
+        <a href="#general-ui" class="nav-btn prev" onclick="showDoc('general-ui')"><span>Previous: UI Guide</span></a>
+        <a href="#general-commonfix" class="nav-btn next" onclick="showDoc('general-commonfix')"><span>Next: Common Fixes</span></a>
+    </div>
+</section>
+
+<section id="general-commonfix" class="doc-content doc-section" style="display:none;">
+    <h1>Common Fixes</h1>
+    <p>Common problems and how to fix them...</p>
+    <div class="page-navigation">
+        <a href="#general-install" class="nav-btn prev" onclick="showDoc('general-install')"><span>Previous: Installation</span></a>
+        <a href="#avion-dropdown" class="nav-btn next" onclick="showDoc('actors')"><span>Next: Lua Engine Actors</span></a>
+    </div>
+</section>
+    </main>
+
+    <script>
+        // side bar minimzig/collpase
+        document.getElementById('toggle-sidebar').addEventListener('click', function() {
+            const sidebar = document.getElementById('sidebar');
+            const content = document.getElementById('content');
+            sidebar.classList.toggle('collapsed');
+            content.classList.toggle('expanded');
+        });
+
+        // Show the selected documentation content
+        function showDoc(docId) {
+            // Hide all docs
+            const allDocs = document.querySelectorAll('.doc-section');
+            allDocs.forEach(doc => doc.style.display = 'none');
+
+            // Show the selected doc
+            const selectedDoc = document.getElementById(docId);
+            if (selectedDoc) {
+                selectedDoc.style.display = 'block';
+            }
+
+            // Update active nav link
+            const allLinks = document.querySelectorAll('.nav-link');
+            allLinks.forEach(link => link.classList.remove('active'));
+            
+            const activeLink = document.querySelector(`a[href="#${docId}"]`);
+            if (activeLink) {
+                activeLink.classList.add('active');
+            }
+
+            // Scroll to top
+            window.scrollTo(0, 0);
+        }
+
+        // Toggle dropdown containers
+        function toggleDropdown(id) {
+            const dropdown = document.getElementById(id);
+            dropdown.classList.toggle('show');
+        }
+
+        // Copy code to clipboard
+        function copyCode(button) {
+            const codeBlock = button.previousElementSibling;
+            const textArea = document.createElement('textarea');
+            textArea.value = codeBlock.textContent;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            
+            // Visual feedback
+            const originalText = button.textContent;
+            button.textContent = 'Copied!';
+            setTimeout(() => {
+                button.textContent = originalText;
+            }, 2000);
+        }
+
+        // Show Actors by default
+        document.addEventListener('DOMContentLoaded', function() {
+            showDoc('actors');
+            
+            // Auto expand the Avion dropdown
+            toggleDropdown('avion-dropdown');
+        });
+
+        // Mobile sidebar handling
+        if (window.innerWidth <= 768) {
+            document.getElementById('sidebar').classList.remove('collapsed');
+            document.getElementById('content').classList.remove('expanded');
+            
+            document.getElementById('toggle-sidebar').addEventListener('click', function() {
+                document.getElementById('sidebar').classList.toggle('show');
+            });
+        }
+
+        document.querySelectorAll('.video-placeholder').forEach(placeholder => {
+    placeholder.addEventListener('click', function() {
+        this.innerHTML = `
+            <iframe width="100%" height="100%" 
+                src="https://www.youtube.com/embed/7NOZB6_-LCE?autoplay=1&mute=1" 
+                frameborder="0" 
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                allowfullscreen 
+                style="border-radius: 8px;">
+            </iframe>
+        `;
+    });
+});
+
+    </script>
+</body>
+</html>
