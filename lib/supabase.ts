@@ -98,20 +98,40 @@ export const authHelpers = {
     },
 };
 
+// Helper to timeout promises
+const timeoutPromise = <T>(promise: PromiseLike<T>, ms: number = 5000): Promise<T> => {
+    return Promise.race([
+        Promise.resolve(promise),
+        new Promise<T>((_, reject) => setTimeout(() => reject(new Error('Request timed out')), ms))
+    ]);
+};
+
 // License key helper functions
 export const licenseHelpers = {
     async validateLicenseKey(key: string): Promise<LicenseKey | null> {
-        const { data, error } = await supabase
-            .from('license_keys')
-            .select('*')
-            .eq('key', key)
-            .maybeSingle();
+        console.log('Validating license key:', key);
+        try {
+            // @ts-ignore - Supabase types are complex, suppressing for timeout wrapper
+            const response = await timeoutPromise(
+                supabase
+                    .from('license_keys')
+                    .select('*')
+                    .eq('key', key)
+                    .maybeSingle()
+            );
 
-        if (error) {
-            console.error('License validation error:', error);
-            return null;
+            const { data, error } = response as any;
+
+            if (error) {
+                console.error('License validation error:', error);
+                return null;
+            }
+            console.log('License validation result:', data);
+            return data;
+        } catch (err) {
+            console.error('License validation timed out or crashed:', err);
+            throw new Error('Database connection timed out. Check your internet or Supabase URL.');
         }
-        return data;
     },
 
     async activateLicenseKey(key: string, userId: string, hwid: string) {
