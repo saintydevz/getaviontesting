@@ -7,10 +7,10 @@ export const Hero: React.FC = () => {
       <h1 className="text-6xl md:text-[84px] hero-heading mb-8 leading-[1.05] font-bold">
         Experience The<br />Future.
       </h1>
-      
+
       <p className="max-w-[580px] text-[#9ca3af] text-lg md:text-[19px] leading-[1.6] mb-12 px-4 font-normal tracking-tight">
-        One of the most powerful Roblox scripting utulities<br className="hidden md:block" /> 
-        available. Seamless execution, stable, and a 100%<br className="hidden md:block" /> 
+        One of the most powerful Roblox scripting utulities<br className="hidden md:block" />
+        available. Seamless execution, stable, and a 100%<br className="hidden md:block" />
         UNC environment with over 200 functions to use.
       </p>
 
@@ -22,7 +22,7 @@ export const Hero: React.FC = () => {
           </svg>
           Download for Windows
         </button>
-        
+
         {/* Exact discord button with dark charcoal background and subtle border */}
         <button className="btn-discord flex items-center justify-center gap-3 px-7 py-3.5 rounded-xl font-bold text-[14px] hover:bg-[#20212b] transition-all active:scale-[0.98]">
           <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">

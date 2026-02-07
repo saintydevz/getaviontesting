@@ -6,7 +6,7 @@ const PRANS = [
     name: "Standard",
     price: "$0",
     period: "Free",
-    features: ["Undetected", "Full sUNC", "Key system (ads)", "Discord Support","Undetected"],
+    features: ["Undetected", "Full sUNC", "Key system (ads)", "Discord Support", "Undetected"],
     buttonText: "Get Started",
     highlight: false
   },
@@ -14,7 +14,7 @@ const PRANS = [
     name: "Weekly",
     price: "$4.99",
     period: "per Week",
-    features: ["Priority execution", "Full sUNC environment", "Private Discord role", "Discord Support","Undetected"],
+    features: ["Priority execution", "Full sUNC environment", "Private Discord role", "Discord Support", "Undetected"],
     buttonText: "Buy Now",
     highlight: true
   },
@@ -22,7 +22,7 @@ const PRANS = [
     name: "Monthly",
     price: "$12.50",
     period: "per Month",
-    features: ["Priority execution", "Full sUNC environment", "Private Discord role", "Discord Support","Undetected"],
+    features: ["Priority execution", "Full sUNC environment", "Private Discord role", "Discord Support", "Undetected"],
     buttonText: "Subscribe",
     highlight: false
   }
@@ -38,13 +38,12 @@ export const Pricing: React.FC = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         {PRANS.map((plan, i) => (
-          <div 
-            key={i} 
-            className={`relative p-10 rounded-3xl flex flex-col ${
-              plan.highlight 
-              ? 'bg-[#ad92ff]/10 border-[#ad92ff]/40' 
+          <div
+            key={i}
+            className={`relative p-10 rounded-3xl flex flex-col ${plan.highlight
+              ? 'bg-[#ad92ff]/10 border-[#ad92ff]/40'
               : 'bg-[#0a0a0f] border-white/[0.05]'
-            } border`}
+              } border`}
           >
             {plan.highlight && (
               <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-[#ad92ff] text-[#1a1a2e] text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider">
@@ -56,7 +55,7 @@ export const Pricing: React.FC = () => {
               <span className="text-5xl font-bold">{plan.price}</span>
               <span className="text-zinc-500 font-medium">{plan.period}</span>
             </div>
-            
+
             <div className="flex flex-col gap-4 mb-10 flex-1">
               {plan.features.map((feature, j) => (
                 <div key={j} className="flex items-center gap-3 text-sm font-medium text-zinc-400">
@@ -68,16 +67,16 @@ export const Pricing: React.FC = () => {
               ))}
             </div>
 
-            <button className={`w-full py-4 rounded-2xl font-bold transition-all active:scale-95 ${
-              plan.highlight 
-              ? 'bg-[#ad92ff] text-[#1a1a2e] hover:brightness-110' 
+            <button className={`w-full py-4 rounded-2xl font-bold transition-all active:scale-95 ${plan.highlight
+              ? 'bg-[#ad92ff] text-[#1a1a2e] hover:brightness-110'
               : 'bg-white/5 text-white hover:bg-white/10'
-            }`}>
+              }`}>
               {plan.buttonText}
             </button>
           </div>
-        ))}
-      </div>
-    </div>
+        ))
+        }
+      </div >
+    </div >
   );
 };

@@ -29,12 +29,7 @@ export const CloudflareLoading: React.FC<CloudflareLoadingProps> = ({ onVerified
 
     const handleError = () => {
         setStatus('error');
-        // Auto-bypass on error so user isn't stuck
-        console.warn('Turnstile failed (likely localhost domain issue), bypassing...');
-        setTimeout(() => {
-            setFadeOut(true);
-            setTimeout(onVerified, 500);
-        }, 1000);
+        console.error('Turnstile verification failed.');
     };
 
     return (

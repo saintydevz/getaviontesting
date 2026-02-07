@@ -171,20 +171,11 @@ const AppContent: React.FC = () => {
   // Show loading while initializing auth
   if (isInitializing) {
     return (
-      <div className="min-h-screen bg-black flex flex-col items-center justify-center gap-4">
-        <div className="w-8 h-8 border-2 border-[#ad92ff]/20 border-t-[#ad92ff] rounded-full animate-spin" />
-
-        {/* Manual Reset Button - appears if loading sticks */}
-        <button
-          onClick={() => {
-            localStorage.clear();
-            sessionStorage.clear();
-            window.location.href = '/';
-          }}
-          className="text-zinc-500 text-xs hover:text-white underline mt-4 opacity-50 hover:opacity-100 transition-opacity"
-        >
-          Stuck? Click to Reset
-        </button>
+      <div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-10 h-10 border-2 border-[#ad92ff]/20 border-t-[#ad92ff] rounded-full animate-spin" />
+          <p className="text-zinc-500 font-medium">Loading Avion...</p>
+        </div>
       </div>
     );
   }

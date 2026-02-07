@@ -1,7 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 
 // Supabase configuration - uses env vars in dev, fallback to hardcoded for production builds
-// Supabase configuration - uses env vars in dev, fallback to hardcoded for production builds
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://ycthqvenlwkitidlfurw.supabase.co';
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_dDiPbTUegIHdvfP0CftWiA_Szyg8cSe';
 
@@ -99,40 +98,20 @@ export const authHelpers = {
     },
 };
 
-// Helper to timeout promises
-const timeoutPromise = <T>(promise: PromiseLike<T>, ms: number = 5000): Promise<T> => {
-    return Promise.race([
-        Promise.resolve(promise),
-        new Promise<T>((_, reject) => setTimeout(() => reject(new Error('Request timed out')), ms))
-    ]);
-};
-
 // License key helper functions
 export const licenseHelpers = {
     async validateLicenseKey(key: string): Promise<LicenseKey | null> {
-        console.log('Validating license key:', key);
-        try {
-            // @ts-ignore - Supabase types are complex, suppressing for timeout wrapper
-            const response = await timeoutPromise(
-                supabase
-                    .from('license_keys')
-                    .select('*')
-                    .eq('key', key)
-                    .maybeSingle()
-            );
+        const { data, error } = await supabase
+            .from('license_keys')
+            .select('*')
+            .eq('key', key)
+            .maybeSingle();
 
-            const { data, error } = response as any;
-
-            if (error) {
-                console.error('License validation error:', error);
-                return null;
-            }
-            console.log('License validation result:', data);
-            return data;
-        } catch (err) {
-            console.error('License validation timed out or crashed:', err);
-            throw new Error('Database connection timed out. Check your internet or Supabase URL.');
+        if (error) {
+            console.error('License validation error:', error);
+            return null;
         }
+        return data;
     },
 
     async activateLicenseKey(key: string, userId: string, hwid: string) {
