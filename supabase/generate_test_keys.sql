@@ -3,6 +3,11 @@
 -- ================================================
 -- Run this in your Supabase SQL Editor after running schema.sql
 
+-- Generate a fixed test key for easy testing
+INSERT INTO public.license_keys (key, type, notes)
+VALUES ('AVION-TEST-KEY-2026', 'weekly', 'Fixed test key')
+ON CONFLICT (key) DO NOTHING;
+
 -- Generate 5 weekly license keys for testing
 DO $$
 DECLARE

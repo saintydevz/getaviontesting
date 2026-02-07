@@ -97,7 +97,10 @@ export const Auth: React.FC<AuthProps> = ({ initialView, setView, onSignIn }) =>
     setError(null);
 
     // Check Turnstile verification
-    if (!turnstileToken) {
+    // Bypass Turnstile on localhost
+    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+
+    if (!turnstileToken && !isLocalhost) {
       setError('Please complete the security verification.');
       return;
     }
@@ -358,7 +361,7 @@ export const Auth: React.FC<AuthProps> = ({ initialView, setView, onSignIn }) =>
 
         <button
           type="submit"
-          disabled={isLoading || lockoutTime > 0 || !turnstileToken}
+          disabled={isLoading || lockoutTime > 0 || (!turnstileToken && !(window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'))}
           className="w-full bg-[#ad92ff] text-[#1a1a2e] font-bold py-4 rounded-2xl hover:brightness-110 transition-all active:scale-[0.98] mt-4 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
         >
           {isLoading ? (
