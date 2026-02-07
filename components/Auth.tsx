@@ -17,6 +17,7 @@ export const Auth: React.FC<AuthProps> = ({ initialView, setView, onSignIn }) =>
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [licenseKey, setLicenseKey] = useState('');
   const [isVisible, setIsVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -40,6 +41,11 @@ export const Auth: React.FC<AuthProps> = ({ initialView, setView, onSignIn }) =>
     const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
     if (!turnstileToken && !isLocalhost) {
       setError('Please complete the security verification.');
+      return;
+    }
+
+    if (isSignUp && !licenseKey.trim()) {
+      setError('Please enter a valid license key.');
       return;
     }
 
@@ -110,6 +116,19 @@ export const Auth: React.FC<AuthProps> = ({ initialView, setView, onSignIn }) =>
                 onChange={(e) => setUsername(e.target.value)}
                 className="w-full bg-black/40 border border-white/[0.06] rounded-2xl px-5 py-4 focus:outline-none focus:border-[#ad92ff]/40 transition-all text-[14px] font-medium placeholder:text-zinc-800 disabled:opacity-50"
                 placeholder="avion_user"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 ml-1">License Key</label>
+              <input
+                type="text"
+                required={isSignUp}
+                disabled={isLoading}
+                value={licenseKey}
+                onChange={(e) => setLicenseKey(e.target.value.toUpperCase())}
+                className="w-full bg-black/40 border border-white/[0.06] rounded-2xl px-5 py-4 focus:outline-none focus:border-[#ad92ff]/40 transition-all text-[14px] font-mono uppercase tracking-wider placeholder:text-zinc-800 disabled:opacity-50"
+                placeholder="AVION-XXXX-XXXX-XXXX"
               />
             </div>
           </div>
