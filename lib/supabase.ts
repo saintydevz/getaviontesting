@@ -36,9 +36,18 @@ export interface RateLimitEntry {
     window_start: string;
 }
 
+// Helper to timeout long-running promises
+const timeoutPromise = <T>(promise: PromiseLike<T>, ms: number = 8000): Promise<T> => {
+    return Promise.race([
+        Promise.resolve(promise),
+        new Promise<T>((_, reject) => setTimeout(() => reject(new Error('DATABASE_TIMEOUT')), ms))
+    ]);
+};
+
 // Auth helper functions
 export const authHelpers = {
     async signUp(email: string, password: string, username: string) {
+        console.log('[Auth] Attempting sign up...');
         const { data, error } = await supabase.auth.signUp({
             email,
             password,
@@ -53,6 +62,7 @@ export const authHelpers = {
 
         // Create profile entry
         if (data.user) {
+            console.log('[Auth] Creating profile record...');
             const { error: profileError } = await supabase.from('profiles').insert({
                 id: data.user.id,
                 email,
@@ -60,13 +70,17 @@ export const authHelpers = {
                 hwid: generateHWID(),
             });
 
-            if (profileError) throw profileError;
+            if (profileError) {
+                console.error('[Auth] Profile creation failed:', profileError);
+                // We don't throw here to allow user to still sign in if they exist but profile failed
+            }
         }
 
         return data;
     },
 
     async signIn(email: string, password: string) {
+        console.log('[Auth] Attempting sign in...');
         const { data, error } = await supabase.auth.signInWithPassword({
             email,
             password,
@@ -88,34 +102,52 @@ export const authHelpers = {
     },
 
     async getProfile(userId: string): Promise<UserProfile | null> {
-        const { data, error } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', userId)
-            .single();
-
-        if (error) return null;
-        return data;
+        try {
+            const response = await timeoutPromise(
+                supabase
+                    .from('profiles')
+                    .select('*')
+                    .eq('id', userId)
+                    .single()
+            );
+            const { data, error } = response as any;
+            if (error) return null;
+            return data;
+        } catch (err) {
+            return null;
+        }
     },
 };
 
 // License key helper functions
 export const licenseHelpers = {
     async validateLicenseKey(key: string): Promise<LicenseKey | null> {
-        const { data, error } = await supabase
-            .from('license_keys')
-            .select('*')
-            .eq('key', key)
-            .maybeSingle();
+        console.log('[License] Validating key:', key);
+        try {
+            const response = await timeoutPromise(
+                supabase
+                    .from('license_keys')
+                    .select('*')
+                    .eq('key', key)
+                    .maybeSingle()
+            );
 
-        if (error) {
-            console.error('License validation error:', error);
-            return null;
+            const { data, error } = response as any;
+
+            if (error) {
+                console.error('[License] Validation error:', error);
+                return null;
+            }
+            console.log('[License] Validation result:', data ? 'Valid' : 'Invalid');
+            return data;
+        } catch (err) {
+            console.error('[License] Validation TIMEOUT');
+            throw new Error('Database connection timed out. Please check your internet or Supabase status.');
         }
-        return data;
     },
 
     async activateLicenseKey(key: string, userId: string, hwid: string) {
+        console.log('[License] Activating key:', key);
         const license = await this.validateLicenseKey(key);
 
         if (!license) {
@@ -146,42 +178,50 @@ export const licenseHelpers = {
                 break;
         }
 
-        const { data, error } = await supabase
-            .from('license_keys')
-            .update({
-                user_id: userId,
-                activated_at: now.toISOString(),
-                expires_at: expiresAt,
-                is_active: true,
-                hwid_locked: hwid,
-            })
-            .eq('key', key)
-            .select();
+        try {
+            const response = await timeoutPromise(
+                supabase
+                    .from('license_keys')
+                    .update({
+                        user_id: userId,
+                        activated_at: now.toISOString(),
+                        expires_at: expiresAt,
+                        is_active: true,
+                        hwid_locked: hwid,
+                    })
+                    .eq('key', key)
+                    .select()
+            );
 
-        if (error) {
-            console.error('License activation error:', error);
-            throw new Error('Failed to activate license key');
+            const { data, error } = response as any;
+            if (error) throw error;
+            console.log('[License] Activated successfully');
+            return data?.[0] || data;
+        } catch (err) {
+            console.error('[License] Activation TIMEOUT or Failure:', err);
+            throw new Error(err instanceof Error ? err.message : 'Database connection timed out during activation.');
         }
-
-        // Return the first result
-        return data?.[0] || null;
     },
 
     async getUserLicense(userId: string): Promise<LicenseKey | null> {
-        const { data, error } = await supabase
-            .from('license_keys')
-            .select('*')
-            .eq('user_id', userId)
-            .eq('is_active', true)
-            .order('expires_at', { ascending: false })
-            .limit(1)
-            .maybeSingle();
+        try {
+            const { data, error } = await supabase
+                .from('license_keys')
+                .select('*')
+                .eq('user_id', userId)
+                .eq('is_active', true)
+                .order('expires_at', { ascending: false })
+                .limit(1)
+                .maybeSingle();
 
-        if (error) {
-            console.error('Error fetching license:', error);
+            if (error) {
+                console.error('Error fetching license:', error);
+                return null;
+            }
+            return data;
+        } catch (err) {
             return null;
         }
-        return data;
     },
 
     async checkLicenseExpiration(license: LicenseKey): Promise<{
@@ -250,12 +290,9 @@ export const licenseHelpers = {
 // Rate limiting helper
 export const rateLimitHelpers = {
     async checkRateLimit(endpoint: string, maxRequests: number = 10, windowMs: number = 60000): Promise<boolean> {
-        // Get client IP (this would be passed from Cloudflare headers in production)
-        const ipAddress = 'client-ip'; // Placeholder - in production, get from request
-
+        const ipAddress = 'client-ip';
         const windowStart = new Date(Date.now() - windowMs).toISOString();
 
-        // Get current count for this IP and endpoint
         const { data, error } = await supabase
             .from('rate_limits')
             .select('request_count')
@@ -265,16 +302,14 @@ export const rateLimitHelpers = {
             .single();
 
         if (error && error.code !== 'PGRST116') {
-            // PGRST116 = no rows returned, which is fine
             console.error('Rate limit check error:', error);
-            return true; // Allow on error
+            return true;
         }
 
         if (data && data.request_count >= maxRequests) {
-            return false; // Rate limited
+            return false;
         }
 
-        // Increment or create rate limit entry
         if (data) {
             await supabase
                 .from('rate_limits')

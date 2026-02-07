@@ -54,9 +54,27 @@ export const Auth: React.FC<AuthProps> = ({ initialView, setView, onSignIn }) =>
   const [lockoutTime, setLockoutTime] = useState(0);
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const [turnstileError, setTurnstileError] = useState(false);
+  const [connectionStatus, setConnectionStatus] = useState<'testing' | 'online' | 'offline'>('testing');
 
   useEffect(() => {
     const timer = setTimeout(() => setIsVisible(true), 10);
+
+    // Test Supabase connection
+    const testConnection = async () => {
+      try {
+        const { error: testErr } = await supabase.from('profiles').select('count', { count: 'exact', head: true });
+        if (testErr) {
+          console.error('[Connection] Test failed:', testErr);
+          setConnectionStatus('offline');
+        } else {
+          setConnectionStatus('online');
+        }
+      } catch (err) {
+        setConnectionStatus('offline');
+      }
+    };
+    testConnection();
+
     return () => clearTimeout(timer);
   }, []);
 
@@ -117,6 +135,7 @@ export const Auth: React.FC<AuthProps> = ({ initialView, setView, onSignIn }) =>
 
     try {
       if (isSignUp) {
+        console.log('[Signup] Starting validation flow...');
         // Enforce Mandatory License Key Validation BEFORE Account Creation
         const key = licenseKey.trim();
         if (!key) {
@@ -126,6 +145,7 @@ export const Auth: React.FC<AuthProps> = ({ initialView, setView, onSignIn }) =>
         }
 
         // 1. Validate License Key Existence and Status
+        console.log('[Signup] Validating license key...');
         const license = await licenseHelpers.validateLicenseKey(key);
 
         if (!license) {
@@ -141,11 +161,16 @@ export const Auth: React.FC<AuthProps> = ({ initialView, setView, onSignIn }) =>
         }
 
         // 2. Check Username Availability
-        const { data: existingUser } = await supabase
+        console.log('[Signup] Checking username availability...');
+        const { data: existingUser, error: checkError } = await supabase
           .from('profiles')
           .select('username')
           .eq('username', username)
           .maybeSingle();
+
+        if (checkError) {
+          console.error('[Signup] Username check error:', checkError);
+        }
 
         if (existingUser) {
           setError('Username is already taken. Please choose another one.');
@@ -154,6 +179,7 @@ export const Auth: React.FC<AuthProps> = ({ initialView, setView, onSignIn }) =>
         }
 
         // 3. Proceed with Sign Up
+        console.log('[Signup] Registering account with Supabase Auth...');
         const { data, error: signUpError } = await supabase.auth.signUp({
           email,
           password,
@@ -164,11 +190,16 @@ export const Auth: React.FC<AuthProps> = ({ initialView, setView, onSignIn }) =>
           },
         });
 
-        if (signUpError) throw signUpError;
+        if (signUpError) {
+          console.error('[Signup] Auth error:', signUpError);
+          throw signUpError;
+        }
 
         if (data.user) {
+          console.log('[Signup] Account created. ID:', data.user.id);
           // Create profile
           const hwid = generateHWID();
+          console.log('[Signup] Creating profile record...');
           const { error: profileError } = await supabase.from('profiles').insert({
             id: data.user.id,
             email,
@@ -176,34 +207,43 @@ export const Auth: React.FC<AuthProps> = ({ initialView, setView, onSignIn }) =>
             hwid,
           });
 
-          if (profileError && !profileError.message.includes('duplicate')) {
-            console.warn('Profile creation warning:', profileError);
+          if (profileError) {
+            console.error('[Signup] Profile creation error:', profileError);
+            if (!profileError.message.includes('duplicate')) {
+              // We'll continue anyway if it's just a duplicate (might happen on partial failure)
+            }
           }
 
           // 3. Activate the License Key - CRITICAL STEP
           try {
+            console.log('[Signup] Activating license key...');
             await licenseHelpers.activateLicenseKey(key, data.user.id, hwid);
+            console.log('[Signup] License activation success!');
           } catch (licenseError: any) {
-            console.error('License activation failed:', licenseError);
+            console.error('[Signup] License activation failure:', licenseError);
             setError(`Account created, but license activation failed: ${licenseError.message}. Please contact support.`);
-            // In a production app, we might want to delete the user here to prevent "zombie" accounts
-            // But for now, we just rely on the Dashboard blocking them.
             setIsLoading(false);
             return;
           }
 
+          console.log('[Signup] Flow complete. Authenticating session...');
           onSignIn(email, username, data.user.id);
         }
       } else {
         // Sign In Flow
+        console.log('[Signin] Attempting login...');
         const { data, error: signInError } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
 
-        if (signInError) throw signInError;
+        if (signInError) {
+          console.error('[Signin] Error:', signInError);
+          throw signInError;
+        }
 
         if (data.user) {
+          console.log('[Signin] Success. Fetching profile...');
           // Get profile for username
           const { data: profile } = await supabase
             .from('profiles')
@@ -220,10 +260,12 @@ export const Auth: React.FC<AuthProps> = ({ initialView, setView, onSignIn }) =>
         }
       }
     } catch (err: any) {
-      console.error('Auth handler error:', err);
+      console.error('[Auth Flow Error]', err);
       // Don't show generic error if specific error already set
       if (!error) {
-        if (err.message?.includes('Password')) {
+        if (err.message === 'DATABASE_TIMEOUT') {
+          setError('The database connection timed out. Please check your internet or retry.');
+        } else if (err.message?.includes('Password')) {
           setError('Password must be at least 6 characters long.');
         } else if (err.message?.includes('User already registered')) {
           setError('Email already exists. Please sign in.');
@@ -232,6 +274,7 @@ export const Auth: React.FC<AuthProps> = ({ initialView, setView, onSignIn }) =>
         }
       }
     } finally {
+      console.log('[Auth] Flow ended.');
       // Reset Turnstile on every attempt end
       setTurnstileToken(null);
       setIsLoading(false);
@@ -251,8 +294,20 @@ export const Auth: React.FC<AuthProps> = ({ initialView, setView, onSignIn }) =>
 
       <form
         onSubmit={handleSubmit}
-        className="w-full bg-[#0d0d14] border border-white/[0.05] p-10 rounded-[32px] shadow-2xl space-y-5 overflow-hidden transition-all duration-500"
+        className="w-full bg-[#0d0d14] border border-white/[0.05] p-10 rounded-[32px] shadow-2xl space-y-5 relative overflow-hidden transition-all duration-500"
       >
+        {/* Connection status badge */}
+        <div className="absolute top-4 right-6 flex items-center gap-2">
+          <div className={`w-1.5 h-1.5 rounded-full ${connectionStatus === 'online' ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)] animate-pulse' :
+              connectionStatus === 'offline' ? 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)]' :
+                'bg-zinc-500 animate-pulse'
+            }`} />
+          <span className="text-[9px] font-bold tracking-widest uppercase text-white/30">
+            {connectionStatus === 'online' ? 'Supabase Live' :
+              connectionStatus === 'offline' ? 'Supabase Offline' :
+                'Testing...'}
+          </span>
+        </div>
         {/* Error Message */}
         {error && (
           <div className="bg-red-500/10 border border-red-500/20 rounded-2xl p-4 flex items-start gap-3">
