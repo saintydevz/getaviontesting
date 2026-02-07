@@ -1,4 +1,3 @@
-/* Base styles */
 *,
 *::before,
 *::after {
@@ -14,7 +13,6 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
 }
@@ -28,7 +26,6 @@ body {
   border-radius: 10px;
 }
 
-/* Custom animations */
 @keyframes spin {
   to {
     transform: rotate(360deg);
@@ -55,7 +52,6 @@ body {
   animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
-/* Hero heading gradient */
 .hero-heading {
   font-weight: 700;
   letter-spacing: -0.04em;
@@ -65,7 +61,6 @@ body {
   background-clip: text;
 }
 
-/* Custom scrollbar for modals */
 .custom-scrollbar::-webkit-scrollbar {
   width: 4px;
 }
@@ -83,7 +78,6 @@ body {
   background: rgba(255, 255, 255, 0.2);
 }
 
-/* Turnstile widget styling */
 .turnstile-container {
   display: flex;
   justify-content: center;

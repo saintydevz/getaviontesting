@@ -580,7 +580,6 @@ const LuaEditor: React.FC<{ code: string }> = ({ code }) => {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  // Simple pseudo-syntax highlighting for the Monaco feel
   const highlightLua = (text: string) => {
     return text.split('\n').map((line, i) => {
       const parts = line.split(/(\s+|[(),[\]{}'"]|--.*$)/g);

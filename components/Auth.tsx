@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View } from '../App';
-import { supabase, authHelpers, licenseHelpers, generateHWID } from '../lib/supabase';
+import { authHelpers } from '../lib/supabase';
 import { Turnstile } from './Turnstile';
 import { CONFIG } from '../lib/config';
 
@@ -10,273 +10,53 @@ interface AuthProps {
   onSignIn: (email: string, username: string, userId: string) => void;
 }
 
-// Turnstile Site Key
 const TURNSTILE_SITE_KEY = CONFIG.TURNSTILE_SITE_KEY;
-
-// Rate limit tracking (client-side supplement to server-side)
-const rateLimitTracker = {
-  attempts: 0,
-  lastAttempt: 0,
-  lockoutUntil: 0,
-
-  canAttempt(): boolean {
-    const now = Date.now();
-    if (now < this.lockoutUntil) return false;
-    if (now - this.lastAttempt > 60000) {
-      this.attempts = 0;
-    }
-    return this.attempts < 5;
-  },
-
-  recordAttempt(): void {
-    this.attempts++;
-    this.lastAttempt = Date.now();
-    if (this.attempts >= 5) {
-      this.lockoutUntil = Date.now() + 5000; // 5 seconds lockout (was 5 minutes)
-    }
-  },
-
-  getRemainingLockout(): number {
-    if (Date.now() >= this.lockoutUntil) return 0;
-    return Math.ceil((this.lockoutUntil - Date.now()) / 1000);
-  }
-};
 
 export const Auth: React.FC<AuthProps> = ({ initialView, setView, onSignIn }) => {
   const [isSignUp, setIsSignUp] = useState(initialView === 'signup');
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [licenseKey, setLicenseKey] = useState('');
   const [isVisible, setIsVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [lockoutTime, setLockoutTime] = useState(0);
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
-  const [turnstileError, setTurnstileError] = useState(false);
-  const [connectionStatus, setConnectionStatus] = useState<'testing' | 'online' | 'offline'>('testing');
 
   useEffect(() => {
     const timer = setTimeout(() => setIsVisible(true), 10);
-
-    // Test Supabase connection
-    const testConnection = async () => {
-      try {
-        const { error: testErr } = await supabase.from('profiles').select('count', { count: 'exact', head: true });
-        if (testErr) {
-          console.error('[Connection] Test failed:', testErr);
-          setConnectionStatus('offline');
-        } else {
-          setConnectionStatus('online');
-        }
-      } catch (err) {
-        setConnectionStatus('offline');
-      }
-    };
-    testConnection();
-
     return () => clearTimeout(timer);
   }, []);
-
-  // Lockout countdown
-  useEffect(() => {
-    if (lockoutTime > 0) {
-      const interval = setInterval(() => {
-        const remaining = rateLimitTracker.getRemainingLockout();
-        setLockoutTime(remaining);
-      }, 1000);
-      return () => clearInterval(interval);
-    }
-  }, [lockoutTime]);
 
   const toggleMode = () => {
     setIsSignUp(!isSignUp);
     setView(!isSignUp ? 'signup' : 'signin');
     setError(null);
-    // Don't reset turnstileToken - keep the verification
-  };
-
-  const handleTurnstileVerify = (token: string) => {
-    setTurnstileToken(token);
-    setTurnstileError(false);
-  };
-
-  const handleTurnstileError = () => {
-    setTurnstileError(true);
-    setError('Security verification failed. Please refresh and try again.');
-  };
-
-  const handleTurnstileExpire = () => {
-    setTurnstileToken(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
-    // Check Turnstile verification
-    // Bypass Turnstile on localhost
     const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-
     if (!turnstileToken && !isLocalhost) {
       setError('Please complete the security verification.');
       return;
     }
 
-    // Check rate limit
-    if (!rateLimitTracker.canAttempt()) {
-      setLockoutTime(rateLimitTracker.getRemainingLockout());
-      setError(`Too many attempts. Please wait ${rateLimitTracker.getRemainingLockout()} seconds.`);
-      return;
-    }
-
     setIsLoading(true);
-    rateLimitTracker.recordAttempt();
 
     try {
       if (isSignUp) {
-        console.log('[Signup] Starting validation flow...');
-        // Enforce Mandatory License Key Validation BEFORE Account Creation
-        const key = licenseKey.trim();
-        if (!key) {
-          setError('License key is required for sign up.');
-          setIsLoading(false);
-          return;
-        }
-
-        // 1. Validate License Key Existence and Status
-        console.log('[Signup] Validating license key...');
-        const license = await licenseHelpers.validateLicenseKey(key);
-
-        if (!license) {
-          setError('Invalid license key. Please check and try again.');
-          setIsLoading(false);
-          return;
-        }
-
-        if (license.user_id) {
-          setError('This license key is already in use by another account.');
-          setIsLoading(false);
-          return;
-        }
-
-        // 2. Check Username Availability
-        console.log('[Signup] Checking username availability...');
-        const { data: existingUser, error: checkError } = await supabase
-          .from('profiles')
-          .select('username')
-          .eq('username', username)
-          .maybeSingle();
-
-        if (checkError) {
-          console.error('[Signup] Username check error:', checkError);
-        }
-
-        if (existingUser) {
-          setError('Username is already taken. Please choose another one.');
-          setIsLoading(false);
-          return;
-        }
-
-        // 3. Proceed with Sign Up
-        console.log('[Signup] Registering account with Supabase Auth...');
-        const { data, error: signUpError } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            data: {
-              username,
-            },
-          },
-        });
-
-        if (signUpError) {
-          console.error('[Signup] Auth error:', signUpError);
-          throw signUpError;
-        }
-
-        if (data.user) {
-          console.log('[Signup] Account created. ID:', data.user.id);
-          // Create profile
-          const hwid = generateHWID();
-          console.log('[Signup] Creating profile record...');
-          const { error: profileError } = await supabase.from('profiles').insert({
-            id: data.user.id,
-            email,
-            username,
-            hwid,
-          });
-
-          if (profileError) {
-            console.error('[Signup] Profile creation error:', profileError);
-            if (!profileError.message.includes('duplicate')) {
-              // We'll continue anyway if it's just a duplicate (might happen on partial failure)
-            }
-          }
-
-          // 3. Activate the License Key - CRITICAL STEP
-          try {
-            console.log('[Signup] Activating license key...');
-            await licenseHelpers.activateLicenseKey(key, data.user.id, hwid);
-            console.log('[Signup] License activation success!');
-          } catch (licenseError: any) {
-            console.error('[Signup] License activation failure:', licenseError);
-            setError(`Account created, but license activation failed: ${licenseError.message}. Please contact support.`);
-            setIsLoading(false);
-            return;
-          }
-
-          console.log('[Signup] Flow complete. Authenticating session...');
-          onSignIn(email, username, data.user.id);
-        }
+        const { user } = await authHelpers.signUp(email, password, username);
+        onSignIn(email, username, user.id);
       } else {
-        // Sign In Flow
-        console.log('[Signin] Attempting login...');
-        const { data, error: signInError } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-
-        if (signInError) {
-          console.error('[Signin] Error:', signInError);
-          throw signInError;
-        }
-
-        if (data.user) {
-          console.log('[Signin] Success. Fetching profile...');
-          // Get profile for username
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('username')
-            .eq('id', data.user.id)
-            .single();
-
-          const displayName = profile?.username || email.split('@')[0];
-
-          // Update last login
-          await supabase.from('profiles').update({ last_login: new Date().toISOString() }).eq('id', data.user.id);
-
-          onSignIn(email, displayName, data.user.id);
-        }
+        const { data, error: signInError }: any = await authHelpers.signIn(email, password);
+        if (signInError) throw signInError;
+        onSignIn(email, data.user.username, data.user.id);
       }
     } catch (err: any) {
-      console.error('[Auth Flow Error]', err);
-      // Don't show generic error if specific error already set
-      if (!error) {
-        if (err.message === 'DATABASE_TIMEOUT') {
-          setError('The database connection timed out. Please check your internet or retry.');
-        } else if (err.message?.includes('Password')) {
-          setError('Password must be at least 6 characters long.');
-        } else if (err.message?.includes('User already registered')) {
-          setError('Email already exists. Please sign in.');
-        } else {
-          setError(err.message || 'An unexpected error occurred');
-        }
-      }
+      setError(err.message || 'An unexpected error occurred');
     } finally {
-      console.log('[Auth] Flow ended.');
-      // Reset Turnstile on every attempt end
-      setTurnstileToken(null);
       setIsLoading(false);
     }
   };
@@ -288,7 +68,7 @@ export const Auth: React.FC<AuthProps> = ({ initialView, setView, onSignIn }) =>
           {isSignUp ? 'Get Started.' : 'Welcome Back.'}
         </h2>
         <p className="text-zinc-500 font-medium transition-all duration-500">
-          {isSignUp ? 'Unlock the full power of Avion scripting.' : 'Continue your scripting journey with Avion.'}
+          {isSignUp ? 'Unlock the full power of Avion.' : 'Continue your journey with Avion.'}
         </p>
       </div>
 
@@ -296,19 +76,6 @@ export const Auth: React.FC<AuthProps> = ({ initialView, setView, onSignIn }) =>
         onSubmit={handleSubmit}
         className="w-full bg-[#0d0d14] border border-white/[0.05] p-10 rounded-[32px] shadow-2xl space-y-5 relative overflow-hidden transition-all duration-500"
       >
-        {/* Connection status badge */}
-        <div className="absolute top-4 right-6 flex items-center gap-2">
-          <div className={`w-1.5 h-1.5 rounded-full ${connectionStatus === 'online' ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)] animate-pulse' :
-              connectionStatus === 'offline' ? 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)]' :
-                'bg-zinc-500 animate-pulse'
-            }`} />
-          <span className="text-[9px] font-bold tracking-widest uppercase text-white/30">
-            {connectionStatus === 'online' ? 'Supabase Live' :
-              connectionStatus === 'offline' ? 'Supabase Offline' :
-                'Testing...'}
-          </span>
-        </div>
-        {/* Error Message */}
         {error && (
           <div className="bg-red-500/10 border border-red-500/20 rounded-2xl p-4 flex items-start gap-3">
             <svg className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -318,25 +85,12 @@ export const Auth: React.FC<AuthProps> = ({ initialView, setView, onSignIn }) =>
           </div>
         )}
 
-        {/* Lockout Warning */}
-        {lockoutTime > 0 && (
-          <div className="bg-amber-500/10 border border-amber-500/20 rounded-2xl p-4 flex items-center gap-3">
-            <svg className="w-5 h-5 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <p className="text-amber-400 text-sm font-medium">
-              Rate limited. Try again in {lockoutTime}s
-            </p>
-          </div>
-        )}
-
-        {/* Common Field: Email */}
         <div className="space-y-2">
           <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 ml-1">Email Address</label>
           <input
             type="email"
             required
-            disabled={isLoading || lockoutTime > 0}
+            disabled={isLoading}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className="w-full bg-black/40 border border-white/[0.06] rounded-2xl px-5 py-4 focus:outline-none focus:border-[#ad92ff]/40 transition-all text-[14px] font-medium placeholder:text-zinc-800 disabled:opacity-50"
@@ -344,7 +98,6 @@ export const Auth: React.FC<AuthProps> = ({ initialView, setView, onSignIn }) =>
           />
         </div>
 
-        {/* Sliding Extra Fields: Username */}
         <div className={`grid transition-all duration-500 ease-in-out ${isSignUp ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0 pointer-events-none'}`}>
           <div className="overflow-hidden space-y-5">
             <div className="space-y-2 pt-1">
@@ -352,7 +105,7 @@ export const Auth: React.FC<AuthProps> = ({ initialView, setView, onSignIn }) =>
               <input
                 type="text"
                 required={isSignUp}
-                disabled={isLoading || lockoutTime > 0}
+                disabled={isLoading}
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 className="w-full bg-black/40 border border-white/[0.06] rounded-2xl px-5 py-4 focus:outline-none focus:border-[#ad92ff]/40 transition-all text-[14px] font-medium placeholder:text-zinc-800 disabled:opacity-50"
@@ -362,13 +115,12 @@ export const Auth: React.FC<AuthProps> = ({ initialView, setView, onSignIn }) =>
           </div>
         </div>
 
-        {/* Common Field: Password */}
         <div className="space-y-2">
           <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 ml-1">Password</label>
           <input
             type="password"
             required
-            disabled={isLoading || lockoutTime > 0}
+            disabled={isLoading}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className="w-full bg-black/40 border border-white/[0.06] rounded-2xl px-5 py-4 focus:outline-none focus:border-[#ad92ff]/40 transition-all text-[14px] font-medium placeholder:text-zinc-800 disabled:opacity-50"
@@ -377,55 +129,25 @@ export const Auth: React.FC<AuthProps> = ({ initialView, setView, onSignIn }) =>
           />
         </div>
 
-        {/* Sliding Extra Fields: License Key */}
-        <div className={`grid transition-all duration-500 ease-in-out ${isSignUp ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0 pointer-events-none'}`}>
-          <div className="overflow-hidden space-y-5">
-            <div className="space-y-2 pt-1">
-              <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 ml-1">License Key (Required)</label>
-              <input
-                type="text"
-                required={isSignUp}
-                disabled={isLoading || lockoutTime > 0}
-                value={licenseKey}
-                onChange={(e) => setLicenseKey(e.target.value.toUpperCase())}
-                className="w-full bg-black/40 border border-white/[0.06] rounded-2xl px-5 py-4 focus:outline-none focus:border-[#ad92ff]/40 transition-all text-[14px] font-medium uppercase tracking-wider placeholder:text-zinc-800 disabled:opacity-50"
-                placeholder="AVION-XXXX-XXXX-XXXX"
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Cloudflare Turnstile */}
         <div className="pt-2">
           <Turnstile
             siteKey={TURNSTILE_SITE_KEY}
-            onVerify={handleTurnstileVerify}
-            onError={handleTurnstileError}
-            onExpire={handleTurnstileExpire}
+            onVerify={(token) => setTurnstileToken(token)}
+            onError={() => setError('Security verification failed.')}
+            onExpire={() => setTurnstileToken(null)}
             theme="dark"
           />
-          {turnstileToken && (
-            <div className="flex items-center justify-center gap-2 mt-3 text-emerald-400 text-xs">
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-              <span>Security verified</span>
-            </div>
-          )}
         </div>
 
         <button
           type="submit"
-          disabled={isLoading || lockoutTime > 0 || (!turnstileToken && !(window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'))}
+          disabled={isLoading || (!turnstileToken && !(window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'))}
           className="w-full bg-[#ad92ff] text-[#1a1a2e] font-bold py-4 rounded-2xl hover:brightness-110 transition-all active:scale-[0.98] mt-4 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
         >
           {isLoading ? (
-            <>
-              <div className="w-5 h-5 border-2 border-[#1a1a2e]/30 border-t-[#1a1a2e] rounded-full animate-spin" />
-              {isSignUp ? 'Verifying Key & creating...' : 'Signing In...'}
-            </>
+            <div className="w-5 h-5 border-2 border-[#1a1a2e]/30 border-t-[#1a1a2e] rounded-full animate-spin" />
           ) : (
-            isSignUp ? 'Activate & Join' : 'Sign In'
+            isSignUp ? 'Create Account' : 'Sign In'
           )}
         </button>
 
@@ -436,7 +158,6 @@ export const Auth: React.FC<AuthProps> = ({ initialView, setView, onSignIn }) =>
           </button>
         </p>
 
-        {/* Security Info */}
         <div className="flex items-center justify-center gap-2 pt-4 text-zinc-700 text-xs">
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />

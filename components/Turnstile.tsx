@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 interface TurnstileProps {
     siteKey: string;
@@ -34,13 +34,11 @@ export const Turnstile: React.FC<TurnstileProps> = ({
     const [isLoaded, setIsLoaded] = useState(false);
     const [isRendered, setIsRendered] = useState(false);
 
-    // Keep callbacks ref updated without triggering re-renders
     useEffect(() => {
         callbacksRef.current = { onVerify, onError, onExpire };
     }, [onVerify, onError, onExpire]);
 
     useEffect(() => {
-        // Load Turnstile script if not already loaded
         const existingScript = document.querySelector('script[src*="turnstile"]');
 
         if (!existingScript) {
@@ -57,7 +55,6 @@ export const Turnstile: React.FC<TurnstileProps> = ({
         } else if (window.turnstile) {
             setIsLoaded(true);
         } else {
-            // Script exists but not loaded yet
             const originalOnLoad = window.onTurnstileLoad;
             window.onTurnstileLoad = () => {
                 originalOnLoad?.();
@@ -66,22 +63,17 @@ export const Turnstile: React.FC<TurnstileProps> = ({
         }
 
         return () => {
-            // Cleanup widget on unmount
             if (widgetIdRef.current && window.turnstile) {
                 try {
                     window.turnstile.remove(widgetIdRef.current);
                     widgetIdRef.current = null;
-                } catch (e) {
-                    // Widget may already be removed
-                }
+                } catch (e) { }
             }
         };
     }, []);
 
     useEffect(() => {
-        // Only render once when loaded and container exists
         if (isLoaded && containerRef.current && window.turnstile && !isRendered) {
-            // Render the widget
             widgetIdRef.current = window.turnstile.render(containerRef.current, {
                 sitekey: siteKey,
                 theme,
@@ -111,30 +103,4 @@ export const Turnstile: React.FC<TurnstileProps> = ({
             )}
         </div>
     );
-};
-
-// Hook for verifying Turnstile token on the server
-export const useTurnstileVerification = () => {
-    const verifyToken = async (token: string, secretKey: string): Promise<boolean> => {
-        try {
-            const response = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    secret: secretKey,
-                    response: token,
-                }),
-            });
-
-            const data = await response.json();
-            return data.success === true;
-        } catch (error) {
-            console.error('Turnstile verification error:', error);
-            return false;
-        }
-    };
-
-    return { verifyToken };
 };

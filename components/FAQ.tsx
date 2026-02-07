@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 
 const QUESTIONS = [
@@ -54,29 +53,25 @@ export const FAQ: React.FC = () => {
         {QUESTIONS.map((item, i) => {
           const isOpen = openIndex === i;
           return (
-            <div 
-              key={i} 
-              className={`group border transition-all duration-500 rounded-[24px] overflow-hidden cursor-pointer ${
-                isOpen 
-                ? 'bg-[#0d0d14] border-[#ad92ff]/30 shadow-[0_0_50px_rgba(173,146,255,0.05)]' 
-                : 'bg-[#08080c] border-white/[0.04] hover:border-white/[0.08]'
-              }`}
+            <div
+              key={i}
+              className={`group border transition-all duration-500 rounded-[24px] overflow-hidden cursor-pointer ${isOpen
+                  ? 'bg-[#0d0d14] border-[#ad92ff]/30 shadow-[0_0_50px_rgba(173,146,255,0.05)]'
+                  : 'bg-[#08080c] border-white/[0.04] hover:border-white/[0.08]'
+                }`}
               onClick={() => setOpenIndex(isOpen ? null : i)}
             >
               <div className="p-6 md:p-8 flex items-center justify-between">
                 <div className="flex items-center gap-6">
-                  {/* Icon Container with Glow */}
-                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-500 ${
-                    isOpen 
-                    ? 'bg-[#ad92ff] text-[#1a1a2e] shadow-[0_0_20px_rgba(173,146,255,0.4)]' 
-                    : 'bg-[#1a1b23] text-zinc-500'
-                  }`}>
+                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-500 ${isOpen
+                      ? 'bg-[#ad92ff] text-[#1a1a2e] shadow-[0_0_20px_rgba(173,146,255,0.4)]'
+                      : 'bg-[#1a1b23] text-zinc-500'
+                    }`}>
                     {item.icon}
                   </div>
-                  
-                  <h3 className={`text-lg md:text-xl font-bold transition-colors duration-300 ${
-                    isOpen ? 'text-white' : 'text-zinc-400'
-                  }`}>
+
+                  <h3 className={`text-lg md:text-xl font-bold transition-colors duration-300 ${isOpen ? 'text-white' : 'text-zinc-400'
+                    }`}>
                     {item.q}
                   </h3>
                 </div>
@@ -88,10 +83,8 @@ export const FAQ: React.FC = () => {
                 </div>
               </div>
 
-              {/* Smooth Opening Content */}
-              <div className={`grid transition-all duration-500 ease-in-out ${
-                isOpen ? 'grid-rows-[1fr] opacity-100 pb-8' : 'grid-rows-[0fr] opacity-0'
-              }`}>
+              <div className={`grid transition-all duration-500 ease-in-out ${isOpen ? 'grid-rows-[1fr] opacity-100 pb-8' : 'grid-rows-[0fr] opacity-0'
+                }`}>
                 <div className="overflow-hidden">
                   <div className="px-6 md:px-8 pl-24 text-zinc-500 leading-relaxed font-medium text-[16px] max-w-2xl">
                     {item.a}
