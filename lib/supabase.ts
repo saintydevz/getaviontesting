@@ -1,13 +1,9 @@
 import { createClient } from '@supabase/supabase-js';
 
 // Supabase configuration - uses env vars in dev, fallback to hardcoded for production builds
-// Supabase configuration - uses env vars
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
-
-if (!supabaseUrl || !supabaseAnonKey || supabaseAnonKey === 'eyJ...') {
-    console.error('CRITICAL: Missing Supabase Credentials in .env file!');
-}
+// Supabase configuration - uses env vars in dev, fallback to hardcoded for production builds
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://ycthqvenlwkitidlfurw.supabase.co';
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_dDiPbTUegIHdvfP0CftWiA_Szyg8cSe';
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
