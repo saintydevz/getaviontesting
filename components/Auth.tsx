@@ -1,8 +1,8 @@
-
 import React, { useState, useEffect } from 'react';
 import { View } from '../App';
 import { supabase, authHelpers, licenseHelpers, generateHWID } from '../lib/supabase';
 import { Turnstile } from './Turnstile';
+import { CONFIG } from '../lib/config';
 
 interface AuthProps {
   initialView: View;
@@ -11,7 +11,7 @@ interface AuthProps {
 }
 
 // Turnstile Site Key
-const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY || '0x4AAAAAACYnEq-AJqvPrwIy';
+const TURNSTILE_SITE_KEY = CONFIG.TURNSTILE_SITE_KEY;
 
 // Rate limit tracking (client-side supplement to server-side)
 const rateLimitTracker = {

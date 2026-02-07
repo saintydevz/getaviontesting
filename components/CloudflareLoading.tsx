@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Turnstile } from './Turnstile';
+import { CONFIG } from '../lib/config';
 
 interface CloudflareLoadingProps {
     onVerified: () => void;
 }
 
-const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY || '0x4AAAAAACYnEq-AJqvPrwIy';
+const TURNSTILE_SITE_KEY = CONFIG.TURNSTILE_SITE_KEY;
 
 export const CloudflareLoading: React.FC<CloudflareLoadingProps> = ({ onVerified }) => {
     const [status, setStatus] = useState<'verifying' | 'verified' | 'error'>('verifying');

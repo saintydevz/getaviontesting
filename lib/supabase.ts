@@ -1,8 +1,9 @@
 import { createClient } from '@supabase/supabase-js';
+import { CONFIG } from './config';
 
-// Supabase configuration - uses env vars in dev, fallback to hardcoded for production builds
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://ycthqvenlwkitidlfurw.supabase.co';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_dDiPbTUegIHdvfP0CftWiA_Szyg8cSe';
+// Supabase configuration - using centralized config for stability
+const supabaseUrl = CONFIG.SUPABASE_URL;
+const supabaseAnonKey = CONFIG.SUPABASE_ANON_KEY;
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
